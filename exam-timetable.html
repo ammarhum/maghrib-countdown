@@ -305,156 +305,169 @@
             .edit-btn {
                 font-size: 0.8rem;
             }
-            
-            .container {
-                padding: 10px;
-                max-width: 100%;
-            }
-            
-            body {
-                padding: 10px;
-            }
         }
 
         @media (max-width: 480px) {
             body {
-                padding: 5px;
+                padding: 0;
                 margin: 0;
+                font-size: 16px;
             }
             
             .container {
-                padding: 5px;
+                padding: 15px;
                 margin: 0;
                 width: 100%;
                 max-width: 100%;
             }
             
             h1 {
-                font-size: 1.8rem;
-                margin-bottom: 5px;
+                font-size: 24px;
+                margin-bottom: 10px;
             }
             
             .subtitle {
-                font-size: 0.85rem;
-                margin-bottom: 15px;
+                font-size: 14px;
+                margin-bottom: 20px;
             }
             
             .nav-buttons {
-                gap: 8px;
-                margin-bottom: 15px;
+                gap: 10px;
+                margin-bottom: 20px;
             }
             
             .nav-btn {
-                padding: 8px 12px;
-                font-size: 0.85rem;
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+            
+            /* Table styles for mobile */
+            .exam-table-container {
+                margin-bottom: 30px;
             }
             
             .subject-table {
                 border-radius: 8px;
-                margin-bottom: 20px;
+                margin-bottom: 25px;
                 box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+                display: block;
+                width: 100%;
             }
             
             .subject-table caption {
-                font-size: 1.1rem;
-                padding: 10px;
+                font-size: 18px;
+                padding: 12px 15px;
+                text-align: center;
             }
             
-            .subject-table th {
+            .edit-btn {
+                position: absolute;
+                right: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+            }
+            
+            /* Convert table to cards on mobile */
+            .subject-table thead {
                 display: none;
+            }
+            
+            .subject-table tbody {
+                display: block;
+                width: 100%;
+            }
+            
+            .subject-table tr {
+                display: block;
+                margin-bottom: 15px;
+                padding: 15px;
+                background-color: #f9f9f9;
+                border-radius: 8px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             }
             
             .subject-table td {
                 display: block;
                 width: 100%;
                 text-align: left;
-                padding: 8px 10px;
+                padding: 8px 0;
                 position: relative;
-                font-size: 0.9rem;
-            }
-            
-            .exam-name::before {
-                content: "Exam: ";
-                font-weight: 600;
-                color: var(--primary-color);
-                display: block;
-                margin-bottom: 2px;
-                font-size: 0.8rem;
-            }
-            
-            .exam-date::before {
-                content: "Date: ";
-                font-weight: 600;
-                color: var(--primary-color);
-                display: block;
-                margin-bottom: 2px;
-                font-size: 0.8rem;
-            }
-            
-            .days-left::before {
-                content: "Days Left: ";
-                font-weight: 600;
-                color: var(--primary-color);
-                display: block;
-                margin-bottom: 2px;
-                font-size: 0.8rem;
+                font-size: 16px;
+                border: none;
             }
             
             .exam-name {
-                border-bottom: none;
-                padding-bottom: 4px;
-                padding-top: 10px;
-                font-weight: 500;
+                font-weight: bold;
+                font-size: 18px;
+                color: var(--primary-color);
+                padding-bottom: 8px;
+                border-bottom: 1px solid #eee;
             }
             
             .exam-date {
-                border-bottom: none;
-                padding-bottom: 4px;
-                padding-top: 4px;
+                padding: 12px 0;
+                font-size: 16px;
             }
             
             .days-left {
-                padding-top: 4px;
-                padding-bottom: 10px;
-                margin-bottom: 0;
-                border-bottom: 1px solid #e9ecef;
+                padding: 8px 0;
+                text-align: left;
             }
             
             .days-left-value {
-                padding: 3px 8px;
-                font-size: 0.8rem;
-                min-width: 40px;
+                padding: 5px 10px;
+                font-size: 14px;
+                min-width: 60px;
+                display: inline-block;
+                text-align: center;
+                margin-top: 5px;
             }
             
-            .add-exam-row td {
-                border-top: 1px solid #e9ecef;
-                padding: 10px;
+            /* Remove the labels and use grid layout instead */
+            .exam-name::before,
+            .exam-date::before,
+            .days-left::before {
+                display: block;
+                font-weight: 600;
+                color: #666;
+                margin-bottom: 5px;
+                font-size: 14px;
             }
             
-            .add-btn {
-                width: 100%;
-                justify-content: center;
-                padding: 8px;
-                font-size: 0.85rem;
+            .exam-name::before {
+                content: "Exam:";
             }
             
+            .exam-date::before {
+                content: "Date:";
+            }
+            
+            .days-left::before {
+                content: "Days Left:";
+            }
+            
+            /* Button styles */
             .controls {
+                display: flex;
                 flex-direction: column;
-                gap: 8px;
-                margin-top: 20px;
+                gap: 15px;
+                margin-top: 25px;
+                padding: 0 10px;
             }
             
             .btn {
                 width: 100%;
-                padding: 10px;
-                font-size: 0.9rem;
+                padding: 15px;
+                font-size: 16px;
+                border-radius: 8px;
             }
             
             .save-message {
-                padding: 8px 15px;
-                font-size: 0.85rem;
-                bottom: 10px;
-                right: 10px;
+                padding: 12px 20px;
+                font-size: 14px;
+                bottom: 20px;
+                right: 20px;
+                border-radius: 8px;
             }
         }
     </style>
