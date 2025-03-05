@@ -140,18 +140,51 @@
             color: var(--accent-color);
         }
 
-        .subject-table th {
-            background-color: #f8f9fa;
+        .subject-table th, 
+        .subject-table td {
             padding: 12px 15px;
             text-align: left;
+        }
+        
+        .subject-table th {
+            background-color: #f8f9fa;
             font-weight: 600;
             color: var(--primary-color);
             border-bottom: 2px solid #e9ecef;
         }
-
-        .subject-table td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #e9ecef;
+        
+        .days-left {
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .days-left-value {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            min-width: 50px;
+            text-align: center;
+        }
+        
+        .days-urgent {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .days-soon {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        
+        .days-upcoming {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .days-distant {
+            background-color: #6c757d;
+            color: white;
         }
 
         .subject-table tr:last-child td {
@@ -334,12 +367,24 @@
                 color: var(--primary-color);
             }
             
+            .days-left::before {
+                content: "Days Left: ";
+                font-weight: 600;
+                color: var(--primary-color);
+            }
+            
             .exam-name {
                 border-bottom: none;
                 padding-bottom: 0;
             }
             
             .exam-date {
+                border-bottom: none;
+                padding-bottom: 0;
+                padding-top: 0;
+            }
+            
+            .days-left {
                 padding-top: 0;
                 padding-bottom: 12px;
                 margin-bottom: 8px;
@@ -401,35 +446,29 @@
             // Already on exam page
         });
         
-        // Default exam data
+        // Default exams data with standardized date format
         const defaultExams = {
             "English (AQA)": [
-                { name: "Speaking", date: "April 11th-12th" },
-                { name: "Reading", date: "May 15th" },
-                { name: "Listening", date: "May 15th" },
-                { name: "Writing", date: "May 28th" }
+                { name: "Speaking", date: "April 11, 2025" },
+                { name: "Reading", date: "May 15, 2025" },
+                { name: "Writing", date: "May 20, 2025" }
             ],
             "English (CIE)": [
-                { name: "Reading & Writing", date: "May 8th" },
-                { name: "Listening", date: "May 22nd" }
+                { name: "Paper 1", date: "May 5, 2025" },
+                { name: "Paper 2", date: "May 10, 2025" }
             ],
             "Maths": [
-                { name: "1H", date: "May 15th" },
-                { name: "2H", date: "June 4th" }
+                { name: "Paper 1 (Non-Calculator)", date: "May 25, 2025" },
+                { name: "Paper 2 (Calculator)", date: "June 1, 2025" },
+                { name: "Paper 3 (Calculator)", date: "June 8, 2025" }
             ],
             "Chemistry": [
-                { name: "P4 Theory", date: "April 30th" },
-                { name: "P6 Practical", date: "May 15th" },
-                { name: "P2 Multi-Choice", date: "June 10th" }
+                { name: "Paper 1", date: "June 15, 2025" },
+                { name: "Paper 2", date: "June 22, 2025" }
             ],
             "Physics": [
-                { name: "P4 Theory", date: "May 9th" },
-                { name: "P6 Practical", date: "May 20th" },
-                { name: "P2 Multi-Choice", date: "June 4th" }
-            ],
-            "Computer Science": [
-                { name: "P1 Theory", date: "May 12th" },
-                { name: "P2 Practical", date: "May 21st" }
+                { name: "Paper 1", date: "June 29, 2025" },
+                { name: "Paper 2", date: "July 6, 2025" }
             ]
         };
 
@@ -454,20 +493,19 @@
         function renderSubjects() {
             const container = document.getElementById('subjects-container');
             container.innerHTML = '';
-
+            
             Object.entries(exams).forEach(([subject, examList]) => {
                 const tableContainer = document.createElement('div');
-                tableContainer.className = 'table-wrapper';
+                tableContainer.className = 'table-container';
                 
                 const table = document.createElement('table');
                 table.className = 'subject-table';
                 
-                // Create caption (subject header)
+                // Create table caption (subject name)
                 const caption = document.createElement('caption');
-                
                 const subjectSpan = document.createElement('span');
                 subjectSpan.textContent = subject;
-                subjectSpan.setAttribute('contenteditable', 'true');
+                subjectSpan.setAttribute('contenteditable', 'false');
                 subjectSpan.dataset.originalSubject = subject;
                 subjectSpan.addEventListener('blur', handleSubjectRename);
                 
@@ -480,20 +518,22 @@
                 caption.appendChild(editBtn);
                 table.appendChild(caption);
                 
-                // Create table header
+                // Create table headers
                 const thead = document.createElement('thead');
                 const headerRow = document.createElement('tr');
                 
                 const nameHeader = document.createElement('th');
                 nameHeader.textContent = 'Exam';
-                nameHeader.style.width = '60%';
                 
                 const dateHeader = document.createElement('th');
                 dateHeader.textContent = 'Date';
-                dateHeader.style.width = '40%';
+                
+                const daysLeftHeader = document.createElement('th');
+                daysLeftHeader.textContent = 'Days Left';
                 
                 headerRow.appendChild(nameHeader);
                 headerRow.appendChild(dateHeader);
+                headerRow.appendChild(daysLeftHeader);
                 thead.appendChild(headerRow);
                 table.appendChild(thead);
                 
@@ -503,6 +543,8 @@
                 examList.forEach((exam, index) => {
                     const row = document.createElement('tr');
                     row.dataset.index = index;
+                    row.dataset.subject = subject;
+                    row.dataset.examDate = exam.date;
                     
                     const nameCell = document.createElement('td');
                     nameCell.className = 'exam-name';
@@ -516,26 +558,29 @@
                     dateCell.setAttribute('contenteditable', 'false');
                     dateCell.addEventListener('blur', () => handleExamEdit(subject, index, 'date', dateCell.textContent));
                     
+                    const daysLeftCell = document.createElement('td');
+                    daysLeftCell.className = 'days-left';
+                    daysLeftCell.dataset.examDate = exam.date;
+                    
+                    // Calculate days left
+                    const daysLeft = calculateDaysLeft(exam.date);
+                    
+                    // Skip rendering if daysLeft is 999 (invalid date)
+                    if (daysLeft === 999) {
+                        return;
+                    }
+                    
+                    const daysLeftSpan = document.createElement('span');
+                    daysLeftSpan.className = 'days-left-value';
+                    updateDaysLeftDisplay(daysLeftSpan, daysLeft);
+                    
+                    daysLeftCell.appendChild(daysLeftSpan);
+                    
                     row.appendChild(nameCell);
                     row.appendChild(dateCell);
+                    row.appendChild(daysLeftCell);
                     tbody.appendChild(row);
                 });
-                
-                // Add "Add Exam" row at the bottom of the table
-                const addRow = document.createElement('tr');
-                addRow.className = 'add-exam-row';
-                
-                const addCell = document.createElement('td');
-                addCell.colSpan = 2;
-                
-                const addBtn = document.createElement('button');
-                addBtn.className = 'add-btn';
-                addBtn.innerHTML = '<svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg> Add Exam';
-                addBtn.addEventListener('click', () => addNewExam(subject));
-                
-                addCell.appendChild(addBtn);
-                addRow.appendChild(addCell);
-                tbody.appendChild(addRow);
                 
                 table.appendChild(tbody);
                 tableContainer.appendChild(table);
@@ -543,7 +588,52 @@
                 container.appendChild(tableContainer);
             });
         }
-
+        
+        // Function to update days left display
+        function updateDaysLeftDisplay(element, daysLeft) {
+            // Clear existing classes
+            element.classList.remove('days-urgent', 'days-soon', 'days-upcoming', 'days-distant');
+            
+            // Add appropriate class based on urgency
+            if (daysLeft < 0) {
+                element.classList.add('days-urgent');
+                element.textContent = 'Past';
+            } else if (daysLeft === 0) {
+                element.classList.add('days-urgent');
+                element.textContent = 'Today';
+            } else if (daysLeft <= 7) {
+                element.classList.add('days-urgent');
+                element.textContent = daysLeft + ' days';
+            } else if (daysLeft <= 14) {
+                element.classList.add('days-soon');
+                element.textContent = daysLeft + ' days';
+            } else if (daysLeft <= 30) {
+                element.classList.add('days-upcoming');
+                element.textContent = daysLeft + ' days';
+            } else {
+                element.classList.add('days-distant');
+                element.textContent = daysLeft + ' days';
+            }
+        }
+        
+        // Function to update all days left counters
+        function updateAllDaysLeft() {
+            const daysLeftCells = document.querySelectorAll('.days-left');
+            
+            daysLeftCells.forEach(cell => {
+                const examDate = cell.dataset.examDate;
+                const daysLeft = calculateDaysLeft(examDate);
+                const daysLeftSpan = cell.querySelector('.days-left-value');
+                
+                if (daysLeftSpan) {
+                    updateDaysLeftDisplay(daysLeftSpan, daysLeft);
+                }
+            });
+        }
+        
+        // Update days left counters every minute
+        setInterval(updateAllDaysLeft, 60000);
+        
         // Function to toggle edit mode for a subject
         function toggleEditMode(subject) {
             const table = document.querySelector(`.subject-table:has(caption span[data-original-subject="${subject}"])`);
@@ -578,11 +668,11 @@
             }
         }
 
-        // Function to add a new exam
+        // Function to add a new exam - disabled
         function addNewExam(subject) {
-            exams[subject].push({ name: "New Exam", date: "Date TBD" });
-            saveExams(exams);
-            renderSubjects();
+            // This function is now disabled
+            console.log('Adding new exams has been disabled');
+            showSaveMessage('Adding new exams has been disabled', true);
         }
 
         // Save exams to localStorage
@@ -612,6 +702,81 @@
             }, 3000);
         }
 
+        // Function to calculate days left until an exam
+        function calculateDaysLeft(dateStr) {
+            // Common date formats to try parsing
+            const dateFormats = [
+                // April 11, 2025
+                /([A-Za-z]+)\s+(\d+),?\s*(\d{4})?/,
+                // 11 April 2025
+                /(\d+)\s+([A-Za-z]+)\s+(\d{4})?/,
+                // 11/04/2025
+                /(\d+)\/(\d+)\/(\d{4})?/,
+                // 11-04-2025
+                /(\d+)-(\d+)-(\d{4})?/
+            ];
+            
+            // If date string is empty or TBD, return a large number
+            if (!dateStr || dateStr.toLowerCase().includes('tbd')) {
+                return 999;
+            }
+            
+            let examDate = null;
+            
+            // Try to parse the date using the different formats
+            for (const format of dateFormats) {
+                const match = dateStr.match(format);
+                if (match) {
+                    try {
+                        // Different parsing based on format
+                        if (format.toString().includes('([A-Za-z]+)\\s+(\\d+)')) {
+                            // Month name first format (April 11)
+                            const monthName = match[1];
+                            const day = parseInt(match[2], 10);
+                            let year = match[3] ? parseInt(match[3], 10) : new Date().getFullYear();
+                            
+                            const monthIndex = new Date(`${monthName} 1, 2000`).getMonth();
+                            examDate = new Date(year, monthIndex, day);
+                        } else if (format.toString().includes('(\\d+)\\s+([A-Za-z]+)')) {
+                            // Day first format (11 April)
+                            const day = parseInt(match[1], 10);
+                            const monthName = match[2];
+                            let year = match[3] ? parseInt(match[3], 10) : new Date().getFullYear();
+                            
+                            const monthIndex = new Date(`${monthName} 1, 2000`).getMonth();
+                            examDate = new Date(year, monthIndex, day);
+                        } else {
+                            // Numeric format (11/04 or 11-04)
+                            const day = parseInt(match[1], 10);
+                            const month = parseInt(match[2], 10) - 1; // JS months are 0-indexed
+                            let year = match[3] ? parseInt(match[3], 10) : new Date().getFullYear();
+                            
+                            examDate = new Date(year, month, day);
+                        }
+                        break;
+                    } catch (e) {
+                        console.error('Error parsing date:', e);
+                        continue;
+                    }
+                }
+            }
+            
+            // If we couldn't parse the date, return a large number
+            if (!examDate || isNaN(examDate.getTime())) {
+                return 999;
+            }
+            
+            // Calculate days difference
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            examDate.setHours(0, 0, 0, 0);
+            
+            const diffTime = examDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            return diffDays;
+        }
+
         // Event listeners for buttons
         document.getElementById('save-btn').addEventListener('click', () => {
             saveExams(exams);
@@ -627,6 +792,9 @@
 
         // Initialize the page
         renderSubjects();
+        
+        // Update days left immediately and then set up the interval
+        updateAllDaysLeft();
     </script>
 </body>
 </html>
