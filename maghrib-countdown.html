@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maghrib Countdown - Cairo, Egypt</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            background: black;
+            color: white;
+            padding: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        h1 {
+            font-size: 2.5em;
+        }
+        #countdown {
+            font-size: 2em;
+            margin: 20px 0;
+        }
+        .progress-bar {
+            width: 80%;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            overflow: hidden;
+            height: 30px;
+            margin-top: 20px;
+        }
+        .progress {
+            height: 100%;
+            width: 0%;
+            background: white;
+            border-radius: 20px;
+            transition: width 1s linear;
+        }
+        .masjid {
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Sultan_Ahmed_Mosque_%28Blue_Mosque%29_in_Istanbul.jpg/800px-Sultan_Ahmed_Mosque_%28Blue_Mosque%29_in_Istanbul.jpg" alt="Masjid" class="masjid">
+    <h1>Countdown to Maghrib in Cairo, Egypt</h1>
+    <div id="countdown">Loading...</div>
+    <div class="progress-bar">
+        <div id="progress" class="progress"></div>
+    </div>
+
+    <script>
+        async function fetchPrayerTimes() {
+            try {
+                const response = await fetch("https://api.aladhan.com/v1/timingsByCity?city=Cairo&country=Egypt&method=2");
+                const data = await response.json();
+                return {
+                    fajr: data.data.timings.Fajr,
+                    maghrib: data.data.timings.Maghrib
+                };
+            } catch (error) {
+                console.error("Error fetching prayer times:", error);
+                return null;
+            }
+        }
+
+        async function updateCountdown() {
+            const timings = await fetchPrayerTimes();
+            if (!timings) {
+                document.getElementById('countdown').textContent = "Error fetching time";
+                return;
+            }
+
+            const now = new Date();
+            const [fajrHours, fajrMinutes] = timings.fajr.split(":").map(Number);
+            const [maghribHours, maghribMinutes] = timings.maghrib.split(":").map(Number);
+            
+            const fajrTime = new Date();
+            fajrTime.setHours(fajrHours, fajrMinutes, 0, 0);
+            
+            const maghribTime = new Date();
+            maghribTime.setHours(maghribHours, maghribMinutes, 0, 0);
+            
+            if (now > maghribTime) {
+                fajrTime.setDate(fajrTime.getDate() + 1);
+                maghribTime.setDate(maghribTime.getDate() + 1);
+            }
+
+            const totalSeconds = (maghribTime - fajrTime) / 1000;
+            
+            function updateDisplay() {
+                const now = new Date();
+                const timeDifference = maghribTime - now;
+                const h = Math.floor(timeDifference / (1000 * 60 * 60));
+                const m = Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((timeDifference % (1000 * 60)) / 1000);
+                document.getElementById('countdown').textContent = `${h}h ${m}m ${s}s`;
+                
+                const elapsedSeconds = totalSeconds - timeDifference / 1000;
+                const progressPercent = (elapsedSeconds / totalSeconds) * 100;
+                document.getElementById('progress').style.width = `${progressPercent}%`;
+
+                setTimeout(updateDisplay, 1000);
+            }
+            updateDisplay();
+        }
+
+        updateCountdown();
+    </script>
+</body>
+</html>
