@@ -158,6 +158,13 @@
             text-align: center;
         }
 
+        .current-date {
+            text-align: center;
+            color: var(--accent-color);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
         .prayer-times-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -299,6 +306,7 @@
             
             <div id="prayer-times">
                 <h2>Today's Prayer Times</h2>
+                <div class="current-date" id="current-date">Loading date...</div>
                 <div class="prayer-times-grid" id="all-prayer-times">
                     Loading all prayer times...
                 </div>
@@ -328,7 +336,15 @@
         
         // Function to get prayer times
         async function getPrayerTimes() {
-            const response = await fetch('https://api.aladhan.com/v1/timingsByCity?city=Cairo&country=Egypt&method=5');
+            // Get today's date in YYYY-MM-DD format for the API
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = (today.getMonth() + 1).toString().padStart(2, '0');
+            const day = today.getDate().toString().padStart(2, '0');
+            const dateStr = `${year}-${month}-${day}`;
+            
+            // Include the date in the API request to ensure we get today's times
+            const response = await fetch(`https://api.aladhan.com/v1/timingsByCity/${dateStr}?city=Cairo&country=Egypt&method=5`);
             const data = await response.json();
             return data.data.timings;
         }
@@ -415,6 +431,11 @@
         // Display all prayer times
         async function displayAllPrayerTimes() {
             try {
+                // Display current date
+                const today = new Date();
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                document.getElementById('current-date').textContent = today.toLocaleDateString('en-US', options);
+                
                 const times = await getPrayerTimes();
                 const prayerTimesContainer = document.getElementById('all-prayer-times');
                 
