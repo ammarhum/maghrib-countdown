@@ -446,29 +446,33 @@
             // Already on exam page
         });
         
-        // Default exams data with standardized date format
+        // Default exams data with original format
         const defaultExams = {
-            "English (AQA)": [
-                { name: "Speaking", date: "April 11, 2025" },
-                { name: "Reading", date: "May 15, 2025" },
-                { name: "Writing", date: "May 20, 2025" }
+            "English Language (AQA)": [
+                { name: "Speaking", date: "April 11th-12th" },
+                { name: "Listening", date: "May 15th" },
+                { name: "Writing", date: "May 28th" }
+            ],
+            "English Literature (AQA)": [
+                { name: "Paper 1", date: "May 20th" },
+                { name: "Paper 2", date: "May 23rd" }
             ],
             "English (CIE)": [
-                { name: "Paper 1", date: "May 5, 2025" },
-                { name: "Paper 2", date: "May 10, 2025" }
+                { name: "Reading & Writing", date: "May 8th" },
+                { name: "Listening", date: "May 22nd" }
             ],
             "Maths": [
-                { name: "Paper 1 (Non-Calculator)", date: "May 25, 2025" },
-                { name: "Paper 2 (Calculator)", date: "June 1, 2025" },
-                { name: "Paper 3 (Calculator)", date: "June 8, 2025" }
+                { name: "Paper 1 (Non-Calculator)", date: "May 25th" },
+                { name: "Paper 2 (Calculator)", date: "June 1st" },
+                { name: "Paper 3 (Calculator)", date: "June 8th" }
             ],
             "Chemistry": [
-                { name: "Paper 1", date: "June 15, 2025" },
-                { name: "Paper 2", date: "June 22, 2025" }
+                { name: "Paper 1", date: "June 15th" },
+                { name: "Paper 2", date: "June 22nd" }
             ],
             "Physics": [
-                { name: "Paper 1", date: "June 29, 2025" },
-                { name: "Paper 2", date: "July 6, 2025" }
+                { name: "Paper 1", date: "June 29th" },
+                { name: "Paper 2", date: "July 6th" }
             ]
         };
 
@@ -706,14 +710,16 @@
         function calculateDaysLeft(dateStr) {
             // Common date formats to try parsing
             const dateFormats = [
+                // April 11th-12th, 2025
+                /([A-Za-z]+)\s+(\d+)(?:st|nd|rd|th)(?:-\d+(?:st|nd|rd|th))?,?\s*(\d{4})?/,
+                // April 11th, 2025
+                /([A-Za-z]+)\s+(\d+)(?:st|nd|rd|th),?\s*(\d{4})?/,
                 // April 11, 2025
                 /([A-Za-z]+)\s+(\d+),?\s*(\d{4})?/,
                 // 11 April 2025
                 /(\d+)\s+([A-Za-z]+)\s+(\d{4})?/,
                 // 11/04/2025
-                /(\d+)\/(\d+)\/(\d{4})?/,
-                // 11-04-2025
-                /(\d+)-(\d+)-(\d{4})?/
+                /(\d+)[\/\-\.](\d+)[\/\-\.](\d{4})?/
             ];
             
             // If date string is empty or TBD, return a large number
@@ -729,7 +735,15 @@
                 if (match) {
                     try {
                         // Different parsing based on format
-                        if (format.toString().includes('([A-Za-z]+)\\s+(\\d+)')) {
+                        if (format.toString().includes('([A-Za-z]+)\\s+(\\d+)(?:st|nd|rd|th)(?:-\\d+(?:st|nd|rd|th))?')) {
+                            // Month name first format with ordinal (April 11th)
+                            const monthName = match[1];
+                            const day = parseInt(match[2], 10);
+                            let year = match[3] ? parseInt(match[3], 10) : new Date().getFullYear();
+                            
+                            const monthIndex = new Date(`${monthName} 1, 2000`).getMonth();
+                            examDate = new Date(year, monthIndex, day);
+                        } else if (format.toString().includes('([A-Za-z]+)\\s+(\\d+),?\\s*(\\d{4})?')) {
                             // Month name first format (April 11)
                             const monthName = match[1];
                             const day = parseInt(match[2], 10);
@@ -737,7 +751,7 @@
                             
                             const monthIndex = new Date(`${monthName} 1, 2000`).getMonth();
                             examDate = new Date(year, monthIndex, day);
-                        } else if (format.toString().includes('(\\d+)\\s+([A-Za-z]+)')) {
+                        } else if (format.toString().includes('(\\d+)\\s+([A-Za-z]+)\\s+(\\d{4})?')) {
                             // Day first format (11 April)
                             const day = parseInt(match[1], 10);
                             const monthName = match[2];
