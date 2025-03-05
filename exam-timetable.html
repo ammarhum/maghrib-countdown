@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Timetable</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --bg-color: #f5f6fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --border-radius: 12px;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --hover-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        /* Navigation styles */
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .nav-btn.active {
+            background-color: var(--secondary-color);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--secondary-color);
+            font-weight: 400;
+            margin-bottom: 20px;
+        }
+
+        /* Table Layout */
+        .exam-table-container {
+            margin-bottom: 40px;
+        }
+
+        .subject-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .subject-table caption {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            text-align: left;
+            position: relative;
+        }
+
+        .subject-table caption span {
+            display: inline-block;
+            padding: 0 5px;
+            border-radius: 4px;
+        }
+
+        .subject-table caption span[contenteditable="true"] {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .edit-btn {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+        }
+
+        .edit-btn:hover {
+            color: var(--accent-color);
+        }
+
+        .subject-table th {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--primary-color);
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .subject-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .subject-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .subject-table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .add-exam-row td {
+            text-align: center;
+            padding: 10px;
+            background-color: #f8f9fa;
+        }
+
+        .exam-name, .exam-date {
+            position: relative;
+        }
+
+        .exam-name[contenteditable="true"], 
+        .exam-date[contenteditable="true"] {
+            background-color: #f0f7ff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            outline: 2px solid var(--primary-color);
+        }
+
+        .add-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .add-btn:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .save-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .save-btn:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .reset-btn {
+            background-color: #f1f1f1;
+            color: #333;
+        }
+
+        .reset-btn:hover {
+            background-color: #e1e1e1;
+        }
+
+        .save-message {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .save-message.show {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .subject-table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            .subject-table caption {
+                font-size: 1.3rem;
+            }
+            
+            .edit-btn {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-buttons">
+            <button class="nav-btn" id="prayer-btn">Prayer Times</button>
+            <button class="nav-btn active" id="exam-btn">Exam Timetable</button>
+        </div>
+        
+        <header>
+            <h1>Exam Timetable</h1>
+            <p class="subtitle">Click on any exam name or date to edit it</p>
+        </header>
+
+        <div class="exam-table-container" id="subjects-container">
+            <!-- Subject tables will be generated here -->
+        </div>
+
+        <div class="controls">
+            <button class="btn save-btn" id="save-btn">Save Changes</button>
+            <button class="btn reset-btn" id="reset-btn">Reset to Default</button>
+        </div>
+    </div>
+
+    <div class="save-message" id="save-message">Changes saved successfully!</div>
+
+    <script>
+        // Navigation between views
+        document.getElementById('prayer-btn').addEventListener('click', function() {
+            window.location.href = 'index.html';
+        });
+        
+        document.getElementById('exam-btn').addEventListener('click', function() {
+            // Already on exam page
+        });
+        
+        // Default exam data
+        const defaultExams = {
+            "English (AQA)": [
+                { name: "Speaking", date: "April 11th-12th" },
+                { name: "Reading", date: "May 15th" },
+                { name: "Listening", date: "May 15th" },
+                { name: "Writing", date: "May 28th" }
+            ],
+            "English (CIE)": [
+                { name: "Reading & Writing", date: "May 8th" },
+                { name: "Listening", date: "May 22nd" }
+            ],
+            "Maths": [
+                { name: "1H", date: "May 15th" },
+                { name: "2H", date: "June 4th" }
+            ],
+            "Chemistry": [
+                { name: "P4 Theory", date: "April 30th" },
+                { name: "P6 Practical", date: "May 15th" },
+                { name: "P2 Multi-Choice", date: "June 10th" }
+            ],
+            "Physics": [
+                { name: "P4 Theory", date: "May 9th" },
+                { name: "P6 Practical", date: "May 20th" },
+                { name: "P2 Multi-Choice", date: "June 4th" }
+            ],
+            "Computer Science": [
+                { name: "P1 Theory", date: "May 12th" },
+                { name: "P2 Practical", date: "May 21st" }
+            ]
+        };
+
+        // Load exams from localStorage or use defaults
+        let exams = JSON.parse(localStorage.getItem('examTimetable')) || defaultExams;
+
+        // Function to render all subject tables
+        function renderSubjects() {
+            const container = document.getElementById('subjects-container');
+            container.innerHTML = '';
+
+            Object.entries(exams).forEach(([subject, examList]) => {
+                const tableContainer = document.createElement('div');
+                tableContainer.className = 'table-wrapper';
+                
+                const table = document.createElement('table');
+                table.className = 'subject-table';
+                
+                // Create caption (subject header)
+                const caption = document.createElement('caption');
+                
+                const subjectSpan = document.createElement('span');
+                subjectSpan.textContent = subject;
+                subjectSpan.setAttribute('contenteditable', 'true');
+                subjectSpan.dataset.originalSubject = subject;
+                subjectSpan.addEventListener('blur', handleSubjectRename);
+                
+                const editBtn = document.createElement('button');
+                editBtn.className = 'edit-btn';
+                editBtn.innerHTML = '<svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/></svg> Edit';
+                editBtn.addEventListener('click', () => toggleEditMode(subject));
+                
+                caption.appendChild(subjectSpan);
+                caption.appendChild(editBtn);
+                table.appendChild(caption);
+                
+                // Create table header
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                
+                const nameHeader = document.createElement('th');
+                nameHeader.textContent = 'Exam';
+                nameHeader.style.width = '60%';
+                
+                const dateHeader = document.createElement('th');
+                dateHeader.textContent = 'Date';
+                dateHeader.style.width = '40%';
+                
+                headerRow.appendChild(nameHeader);
+                headerRow.appendChild(dateHeader);
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+                
+                // Create table body
+                const tbody = document.createElement('tbody');
+                
+                examList.forEach((exam, index) => {
+                    const row = document.createElement('tr');
+                    row.dataset.index = index;
+                    
+                    const nameCell = document.createElement('td');
+                    nameCell.className = 'exam-name';
+                    nameCell.textContent = exam.name;
+                    nameCell.setAttribute('contenteditable', 'false');
+                    nameCell.addEventListener('blur', () => handleExamEdit(subject, index, 'name', nameCell.textContent));
+                    
+                    const dateCell = document.createElement('td');
+                    dateCell.className = 'exam-date';
+                    dateCell.textContent = exam.date;
+                    dateCell.setAttribute('contenteditable', 'false');
+                    dateCell.addEventListener('blur', () => handleExamEdit(subject, index, 'date', dateCell.textContent));
+                    
+                    row.appendChild(nameCell);
+                    row.appendChild(dateCell);
+                    tbody.appendChild(row);
+                });
+                
+                // Add "Add Exam" row at the bottom of the table
+                const addRow = document.createElement('tr');
+                addRow.className = 'add-exam-row';
+                
+                const addCell = document.createElement('td');
+                addCell.colSpan = 2;
+                
+                const addBtn = document.createElement('button');
+                addBtn.className = 'add-btn';
+                addBtn.innerHTML = '<svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg> Add Exam';
+                addBtn.addEventListener('click', () => addNewExam(subject));
+                
+                addCell.appendChild(addBtn);
+                addRow.appendChild(addCell);
+                tbody.appendChild(addRow);
+                
+                table.appendChild(tbody);
+                tableContainer.appendChild(table);
+                
+                container.appendChild(tableContainer);
+            });
+        }
+
+        // Function to toggle edit mode for a subject
+        function toggleEditMode(subject) {
+            const table = document.querySelector(`.subject-table:has(caption span[data-original-subject="${subject}"])`);
+            const examCells = table.querySelectorAll('.exam-name, .exam-date');
+            
+            examCells.forEach(cell => {
+                const isEditable = cell.getAttribute('contenteditable') === 'true';
+                cell.setAttribute('contenteditable', !isEditable);
+                
+                if (!isEditable && cell.classList.contains('exam-name')) {
+                    cell.focus();
+                }
+            });
+        }
+
+        // Function to handle exam edits
+        function handleExamEdit(subject, index, field, value) {
+            exams[subject][index][field] = value.trim();
+            saveExams();
+        }
+
+        // Function to handle subject rename
+        function handleSubjectRename(event) {
+            const oldSubject = event.target.dataset.originalSubject;
+            const newSubject = event.target.textContent.trim();
+            
+            if (oldSubject !== newSubject && newSubject !== '') {
+                exams[newSubject] = exams[oldSubject];
+                delete exams[oldSubject];
+                event.target.dataset.originalSubject = newSubject;
+                saveExams();
+            }
+        }
+
+        // Function to add a new exam
+        function addNewExam(subject) {
+            exams[subject].push({ name: "New Exam", date: "Date TBD" });
+            saveExams();
+            renderSubjects();
+        }
+
+        // Function to save exams to localStorage
+        function saveExams() {
+            localStorage.setItem('examTimetable', JSON.stringify(exams));
+            showSaveMessage();
+        }
+
+        // Function to show save message
+        function showSaveMessage() {
+            const message = document.getElementById('save-message');
+            message.classList.add('show');
+            
+            setTimeout(() => {
+                message.classList.remove('show');
+            }, 2000);
+        }
+
+        // Event listeners for buttons
+        document.getElementById('save-btn').addEventListener('click', () => {
+            saveExams();
+        });
+
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to reset to the default exam timetable? All changes will be lost.')) {
+                exams = JSON.parse(JSON.stringify(defaultExams));
+                saveExams();
+                renderSubjects();
+            }
+        });
+
+        // Initialize the page
+        renderSubjects();
+    </script>
+</body>
+</html>
