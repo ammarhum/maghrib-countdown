@@ -265,6 +265,100 @@
                 font-size: 0.8rem;
             }
         }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .subtitle {
+                font-size: 0.9rem;
+            }
+            
+            .nav-buttons {
+                gap: 8px;
+            }
+            
+            .nav-btn {
+                padding: 8px 15px;
+                font-size: 0.9rem;
+            }
+            
+            .subject-table {
+                border-radius: 8px;
+                margin-bottom: 20px;
+            }
+            
+            .subject-table caption {
+                font-size: 1.1rem;
+                padding: 12px;
+            }
+            
+            .subject-table th {
+                display: none;
+            }
+            
+            .subject-table td {
+                display: block;
+                width: 100%;
+                text-align: left;
+                padding: 8px 12px;
+                position: relative;
+            }
+            
+            .exam-name::before {
+                content: "Exam: ";
+                font-weight: 600;
+                color: var(--primary-color);
+            }
+            
+            .exam-date::before {
+                content: "Date: ";
+                font-weight: 600;
+                color: var(--primary-color);
+            }
+            
+            .exam-name {
+                border-bottom: none;
+                padding-bottom: 0;
+            }
+            
+            .exam-date {
+                padding-top: 0;
+                padding-bottom: 12px;
+                margin-bottom: 8px;
+                border-bottom: 1px solid #e9ecef;
+            }
+            
+            .add-exam-row td {
+                border-top: 1px solid #e9ecef;
+                padding: 12px;
+            }
+            
+            .add-btn {
+                width: 100%;
+                justify-content: center;
+                padding: 10px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .btn {
+                width: 100%;
+                padding: 12px;
+            }
+        }
     </style>
 </head>
 <body>
