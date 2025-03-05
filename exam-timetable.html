@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Exam Timetable</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -22,6 +22,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-box-sizing: border-box;
         }
 
         body {
@@ -30,17 +31,22 @@
             color: var(--text-color);
             line-height: 1.6;
             padding: 20px;
+            width: 100%;
+            overflow-x: hidden;
+            -webkit-text-size-adjust: 100%;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
+            width: 100%;
         }
 
         header {
             text-align: center;
             margin-bottom: 30px;
+            width: 100%;
         }
 
         /* Navigation styles */
@@ -62,6 +68,7 @@
             font-weight: 500;
             cursor: pointer;
             transition: all 0.3s ease;
+            -webkit-appearance: none;
         }
 
         .nav-btn:hover {
@@ -89,6 +96,7 @@
         /* Table Layout */
         .exam-table-container {
             margin-bottom: 40px;
+            width: 100%;
         }
 
         .subject-table {
@@ -226,6 +234,7 @@
             font-family: 'Poppins', sans-serif;
             font-size: 0.9rem;
             transition: all 0.3s ease;
+            -webkit-appearance: none;
         }
 
         .add-btn:hover {
@@ -237,6 +246,7 @@
             justify-content: center;
             gap: 15px;
             margin-top: 30px;
+            width: 100%;
         }
 
         .btn {
@@ -247,6 +257,7 @@
             font-weight: 500;
             cursor: pointer;
             transition: all 0.3s ease;
+            -webkit-appearance: none;
         }
 
         .save-btn {
@@ -312,38 +323,54 @@
                 padding: 0;
                 margin: 0;
                 font-size: 16px;
+                width: 100vw;
+                overflow-x: hidden;
+                -webkit-overflow-scrolling: touch;
             }
             
             .container {
                 padding: 15px;
-                margin: 0;
+                margin: 0 auto;
                 width: 100%;
                 max-width: 100%;
+                box-sizing: border-box;
+                -webkit-box-sizing: border-box;
             }
             
             h1 {
                 font-size: 24px;
                 margin-bottom: 10px;
+                width: 100%;
+                text-align: center;
             }
             
             .subtitle {
                 font-size: 14px;
                 margin-bottom: 20px;
+                width: 100%;
+                text-align: center;
             }
             
             .nav-buttons {
                 gap: 10px;
                 margin-bottom: 20px;
+                width: 100%;
+                display: flex;
+                justify-content: center;
             }
             
             .nav-btn {
                 padding: 10px 15px;
                 font-size: 14px;
+                flex: 1;
+                max-width: 45%;
+                text-align: center;
             }
             
             /* Table styles for mobile */
             .exam-table-container {
                 margin-bottom: 30px;
+                width: 100%;
             }
             
             .subject-table {
@@ -358,6 +385,7 @@
                 font-size: 18px;
                 padding: 12px 15px;
                 text-align: center;
+                width: 100%;
             }
             
             .edit-btn {
@@ -384,6 +412,7 @@
                 background-color: #f9f9f9;
                 border-radius: 8px;
                 box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                width: 100%;
             }
             
             .subject-table td {
@@ -453,6 +482,7 @@
                 gap: 15px;
                 margin-top: 25px;
                 padding: 0 10px;
+                width: 100%;
             }
             
             .btn {
@@ -460,6 +490,7 @@
                 padding: 15px;
                 font-size: 16px;
                 border-radius: 8px;
+                -webkit-appearance: none;
             }
             
             .save-message {
@@ -468,6 +499,8 @@
                 bottom: 20px;
                 right: 20px;
                 border-radius: 8px;
+                left: 20px;
+                text-align: center;
             }
         }
     </style>
