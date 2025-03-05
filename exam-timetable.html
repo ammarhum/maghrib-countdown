@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <title>Exam Timetable</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -31,6 +33,7 @@
             line-height: 1.6;
             width: 100%;
             overflow-x: hidden;
+            transition: all 0.3s ease;
         }
 
         .container {
@@ -39,6 +42,7 @@
             margin: 0;
             display: flex;
             flex-direction: column;
+            transition: all 0.3s ease;
         }
 
         header {
@@ -419,8 +423,25 @@
     </div>
 
     <script>
+        // Check if we're coming from the prayer tab
+        window.addEventListener('DOMContentLoaded', function() {
+            if (sessionStorage.getItem('activeTab') === 'exam') {
+                // We're coming from the prayer tab
+                document.getElementById('prayer-btn').classList.remove('active');
+                document.getElementById('exam-btn').classList.add('active');
+                
+                // Clear the session storage
+                sessionStorage.removeItem('activeTab');
+                
+                // Force a reflow to ensure consistent sizing
+                document.body.offsetHeight;
+            }
+        });
+        
         // Navigation between views
         document.getElementById('prayer-btn').addEventListener('click', function() {
+            // Use a smoother transition to prevent size changes
+            sessionStorage.setItem('activeTab', 'prayer');
             window.location.href = 'index.html';
         });
         
