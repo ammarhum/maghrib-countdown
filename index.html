@@ -179,11 +179,55 @@
             border-radius: 10px;
             background-color: var(--bg-color);
             transition: all 0.3s ease;
+            position: relative;
         }
 
         .prayer-time-item:hover {
             transform: translateY(-3px);
             box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .prayer-time-item.current {
+            background-color: var(--primary-color);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
+        }
+        
+        .prayer-time-item.current .prayer-name,
+        .prayer-time-item.current .prayer-time {
+            color: white;
+        }
+        
+        .prayer-time-item.current::after {
+            content: "Current";
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: var(--accent-color);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .prayer-time-item.next {
+            border: 2px solid var(--primary-color);
+        }
+        
+        .prayer-time-item.next::after {
+            content: "Next";
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
         .prayer-name {
@@ -516,11 +560,57 @@
                     'Isha': 'Isha'
                 };
                 
+                // Determine current and next prayer
+                const now = new Date();
+                let currentPrayer = null;
+                let nextPrayer = null;
+                
+                // Convert prayer times to Date objects for comparison
+                const prayerTimes = {};
+                for (const [key, time] of Object.entries(times)) {
+                    if (prayerNames[key]) {
+                        prayerTimes[key] = parseTime(time);
+                    }
+                }
+                
+                // Sort prayer times chronologically
+                const sortedPrayers = Object.keys(prayerTimes).sort((a, b) => prayerTimes[a] - prayerTimes[b]);
+                
+                // Find current and next prayer
+                for (let i = 0; i < sortedPrayers.length; i++) {
+                    const prayer = sortedPrayers[i];
+                    const prayerTime = prayerTimes[prayer];
+                    
+                    if (i < sortedPrayers.length - 1) {
+                        const nextPrayerTime = prayerTimes[sortedPrayers[i + 1]];
+                        
+                        if (now >= prayerTime && now < nextPrayerTime) {
+                            currentPrayer = prayer;
+                            nextPrayer = sortedPrayers[i + 1];
+                            break;
+                        }
+                    } else if (now >= prayerTime) {
+                        // After the last prayer of the day
+                        currentPrayer = prayer;
+                        nextPrayer = sortedPrayers[0]; // Next day's first prayer
+                        break;
+                    }
+                }
+                
+                // If we haven't found the current prayer yet, we're before the first prayer
+                if (!currentPrayer) {
+                    currentPrayer = null;
+                    nextPrayer = sortedPrayers[0];
+                }
+                
                 let html = '';
                 for (const [key, name] of Object.entries(prayerNames)) {
                     if (times[key]) {
+                        const isCurrent = key === currentPrayer;
+                        const isNext = key === nextPrayer;
+                        
                         html += `
-                            <div class="prayer-time-item">
+                            <div class="prayer-time-item ${isCurrent ? 'current' : ''} ${isNext ? 'next' : ''}">
                                 <div class="prayer-name">${name}</div>
                                 <div class="prayer-time">${formatTo12Hour(times[key])}</div>
                             </div>
@@ -529,6 +619,17 @@
                 }
                 
                 prayerTimesContainer.innerHTML = html;
+                
+                // Play Adhan for current prayer if it just started (within the last minute)
+                if (currentPrayer) {
+                    const currentTime = new Date();
+                    const prayerTime = prayerTimes[currentPrayer];
+                    const diffInMinutes = Math.abs(currentTime - prayerTime) / (1000 * 60);
+                    
+                    if (diffInMinutes < 1) {
+                        playAdhan();
+                    }
+                }
             } catch (error) {
                 console.error('Error displaying all prayer times:', error);
                 document.getElementById('all-prayer-times').innerHTML = `
@@ -537,6 +638,26 @@
                         <button onclick="displayAllPrayerTimes()" class="retry-btn">Retry</button>
                     </div>
                 `;
+            }
+        }
+        
+        // Function to play Adhan
+        function playAdhan() {
+            try {
+                const adhan = new Audio('https://islamcan.com/audio/adhan/azan1.mp3');
+                adhan.play().catch(e => console.log('User interaction required to play Adhan'));
+                
+                // Show notification if supported
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification('Prayer Time', {
+                        body: 'It\'s time to pray',
+                        icon: 'https://example.com/mosque-icon.png'
+                    });
+                } else if ('Notification' in window && Notification.permission !== 'denied') {
+                    Notification.requestPermission();
+                }
+            } catch (error) {
+                console.error('Error playing Adhan:', error);
             }
         }
         
