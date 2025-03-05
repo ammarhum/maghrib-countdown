@@ -2,9 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Exam Timetable</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -13,36 +11,26 @@
             --secondary-color: #34495e;
             --accent-color: #3498db;
             --bg-color: #f5f6fa;
-            --card-bg: #ffffff;
             --text-color: #2c3e50;
-            --border-radius: 12px;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            --hover-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
         }
 
         body {
+            margin: 0;
+            padding: 0;
             font-family: 'Poppins', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            line-height: 1.6;
+            min-height: 100vh;
             width: 100%;
             overflow-x: hidden;
-            transition: all 0.3s ease;
         }
 
         .container {
             width: 100%;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            transition: all 0.3s ease;
+            max-width: 800px;
+            margin: 60px auto 0; /* Space for fixed nav */
+            text-align: center;
+            padding: 0 10px;
         }
 
         header {
@@ -50,7 +38,7 @@
             padding: 20px;
             background-color: white;
             width: 100%;
-            margin-top: 60px; /* Add space for fixed nav */
+            margin-top: 0; /* No extra margin needed since container has it */
         }
 
         /* Navigation styles - Fixed at top */
@@ -78,7 +66,6 @@
             font-family: 'Poppins', sans-serif;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s ease;
             flex: 1;
             max-width: 150px;
             text-align: center;
@@ -272,7 +259,6 @@
             font-family: 'Poppins', sans-serif;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s ease;
             font-size: 16px;
         }
 
@@ -281,17 +267,9 @@
             color: white;
         }
 
-        .save-btn:hover {
-            background-color: #2980b9;
-        }
-
         .reset-btn {
             background-color: #e74c3c;
             color: white;
-        }
-
-        .reset-btn:hover {
-            background-color: #c0392b;
         }
 
         .save-message {
@@ -306,7 +284,6 @@
             font-weight: 500;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             opacity: 0;
-            transition: opacity 0.3s ease;
             z-index: 1000;
         }
 
@@ -423,25 +400,8 @@
     </div>
 
     <script>
-        // Check if we're coming from the prayer tab
-        window.addEventListener('DOMContentLoaded', function() {
-            if (sessionStorage.getItem('activeTab') === 'exam') {
-                // We're coming from the prayer tab
-                document.getElementById('prayer-btn').classList.remove('active');
-                document.getElementById('exam-btn').classList.add('active');
-                
-                // Clear the session storage
-                sessionStorage.removeItem('activeTab');
-                
-                // Force a reflow to ensure consistent sizing
-                document.body.offsetHeight;
-            }
-        });
-        
         // Navigation between views
         document.getElementById('prayer-btn').addEventListener('click', function() {
-            // Use a smoother transition to prevent size changes
-            sessionStorage.setItem('activeTab', 'prayer');
             window.location.href = 'index.html';
         });
         
