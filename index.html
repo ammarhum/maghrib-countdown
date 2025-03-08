@@ -714,26 +714,7 @@
             document.getElementById('progress').style.width = `${progress}%`;
         }
 
-        // Request permission for notifications
-        if (Notification.permission !== 'granted') {
-            Notification.requestPermission().then(permission => {
-                if (permission === 'granted') {
-                    console.log('Notification permission granted.');
-                }
-            });
-        }
-
-        // Function to send countdown notification
-        function sendCountdownNotification(title, body) {
-            if (Notification.permission === 'granted') {
-                new Notification(title, {
-                    body: body,
-                    icon: 'https://example.com/icon.png' // Replace with a valid icon URL
-                });
-            }
-        }
-
-        // Update countdown function to send notifications
+        // Update countdown
         async function updateCountdown() {
             const times = await getPrayerTimes();
             const fajrTime = parseTime(times.Fajr);
@@ -748,9 +729,6 @@
                 let prevMaghribTime = new Date(maghribTime);
                 prevMaghribTime.setDate(prevMaghribTime.getDate() - 1);
                 
-                let title = '';
-                let body = '';
-
                 // Determine which prayer to count down to based on current time
                 if (now > fajrTime && now < maghribTime) {
                     // Between Fajr and Maghrib - count down to Maghrib
@@ -758,9 +736,6 @@
                     document.getElementById('countdown-title').textContent = "Time Until Maghrib";
                     document.getElementById('countdown').textContent = formatTimeRemaining(timeRemaining);
                     updateProgress(fajrTime, maghribTime, now);
-                    
-                    title = 'Time Until Maghrib';
-                    body = `Maghrib in ${formatTimeRemaining(timeRemaining)}`;
                 } else {
                     // After Maghrib or before Fajr - count down to Fajr
                     if (now > maghribTime) {
@@ -777,13 +752,7 @@
                         // Before Fajr, we're progressing from previous Maghrib to Fajr
                         updateProgress(prevMaghribTime, fajrTime, now);
                     }
-
-                    title = 'Time Until Fajr';
-                    body = `Fajr in ${formatTimeRemaining(timeRemaining)}`;
                 }
-
-                // Send notification
-                sendCountdownNotification(title, body);
             }, 1000);
         }
         
