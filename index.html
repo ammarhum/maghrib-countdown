@@ -668,6 +668,16 @@
         // Function to get prayer times
         async function getPrayerTimes() {
             try {
+                // GUARANTEED FALLBACK - comment out the return statement below if you want to use the API
+                // return {
+                //     Fajr: '05:30',
+                //     Sunrise: '06:45', 
+                //     Dhuhr: '12:15',
+                //     Asr: '15:30',
+                //     Maghrib: '18:00',
+                //     Isha: '19:30'
+                // };
+
                 const today = new Date();
                 const year = today.getFullYear();
                 const month = (today.getMonth() + 1).toString().padStart(2, '0');
@@ -682,37 +692,40 @@
                 }
 
                 console.log('Fetching prayer times from API...');
-                const apiUrl = `https://api.aladhan.com/v1/timingsByCity/${dateStr}?city=Cairo&country=Egypt&method=5`;
+                
+                // Using a different API endpoint that should be more reliable
+                const apiUrl = `https://api.aladhan.com/v1/calendarByCity?city=Cairo&country=Egypt&method=5&month=${month}&year=${year}`;
                 console.log('API URL:', apiUrl);
-
-                const response = await fetch(apiUrl, {
-                    method: 'GET',
-                    mode: 'cors',
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                });
-
+                
+                const response = await fetch(apiUrl);
+                
                 if (!response.ok) {
-                    throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
+                    throw new Error(`Network response was not ok: ${response.status}`);
                 }
-
+                
                 const data = await response.json();
                 console.log('Prayer times data received');
-
-                if (!data || !data.data || !data.data.timings) {
+                
+                if (!data || !data.data || !data.data[day - 1] || !data.data[day - 1].timings) {
                     throw new Error('Invalid data format received from API');
                 }
-
+                
+                const timings = data.data[day - 1].timings;
+                
+                // Clean up the timing values to remove the (EET) suffix
+                const cleanTimings = {};
+                for (const [prayer, time] of Object.entries(timings)) {
+                    cleanTimings[prayer] = time.split(' ')[0];
+                }
+                
                 // Cache the prayer times
-                localStorage.setItem(`prayerTimes_${dateStr}`, JSON.stringify(data.data.timings));
-
-                return data.data.timings;
+                localStorage.setItem(`prayerTimes_${dateStr}`, JSON.stringify(cleanTimings));
+                
+                return cleanTimings;
             } catch (error) {
                 console.error('Error fetching prayer times:', error);
-                document.getElementById('all-prayer-times').innerHTML = 'Error loading prayer times. Please check your connection and try again.';
-
-                // Return fallback prayer times for testing if API fails
+                
+                // GUARANTEED FALLBACK
                 const fallbackTimes = {
                     Fajr: '05:30',
                     Sunrise: '06:45', 
@@ -721,12 +734,12 @@
                     Maghrib: '18:00',
                     Isha: '19:30'
                 };
-
+                
                 // Store fallback times in cache to avoid repeated failed API calls
                 const today = new Date();
                 const dateStr = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
                 localStorage.setItem(`prayerTimes_${dateStr}`, JSON.stringify(fallbackTimes));
-
+                
                 return fallbackTimes;
             }
         }
@@ -874,25 +887,27 @@
         // Display all prayer times
         async function displayAllPrayerTimes() {
             try {
-                console.log('Displaying all prayer times...');
                 const today = new Date();
                 const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-                document.getElementById('current-date').textContent = today.toLocaleDateString('en-US', options);
-
+                const dateElement = document.getElementById('current-date');
+                if (dateElement) {
+                    dateElement.textContent = today.toLocaleDateString('en-US', options);
+                }
+                
                 const times = await getPrayerTimes();
                 console.log('Prayer times received for display:', times);
-
+                
                 if (!times) {
                     console.error('Prayer times data is undefined');
                     throw new Error('Prayer times data is undefined');
                 }
-
+                
                 const prayerTimesContainer = document.getElementById('all-prayer-times');
                 if (!prayerTimesContainer) {
                     console.error('Prayer times container not found');
                     return;
                 }
-
+                
                 const prayerNames = {
                     'Fajr': 'Fajr',
                     'Sunrise': 'Sunrise',
@@ -901,43 +916,26 @@
                     'Maghrib': 'Maghrib',
                     'Isha': 'Isha'
                 };
-
-                const now = new Date();
-                let nextPrayer = null;
-                const prayerTimesArray = [];
-
-                for (const [key, timeStr] of Object.entries(times)) {
-                    if (key in prayerNames) {
-                        const prayerTime = parseTime(timeStr);
-                        prayerTimesArray.push({ name: key, time: prayerTime });
-                        if (prayerTime > now && (!nextPrayer || prayerTime < nextPrayer.time)) {
-                            nextPrayer = { name: key, time: prayerTime };
-                        }
-                    }
-                }
-
-                if (!nextPrayer && prayerTimesArray.length > 0) {
-                    nextPrayer = { name: 'Fajr', time: null };
-                }
-
+                
                 let html = '';
                 for (const [key, name] of Object.entries(prayerNames)) {
-                    if (times[key]) {
-                        const isNextPrayer = nextPrayer && nextPrayer.name === key;
-                        html += `
-                            <div class="prayer-time-item ${isNextPrayer ? 'next-prayer' : ''}">
-                                <div class="prayer-name">${name}</div>
-                                <div class="prayer-time">${formatTo12Hour(times[key])}</div>
-                            </div>
-                        `;
-                    }
+                    const displayTime = times[key] ? formatTo12Hour(times[key]) : '-- : --';
+                    html += `
+                        <div class="prayer-time-item ${key === 'Fajr' || key === 'Maghrib' ? 'highlighted' : ''}">
+                            <div class="prayer-name">${name}</div>
+                            <div class="prayer-time">${displayTime}</div>
+                        </div>
+                    `;
                 }
-
+                
                 prayerTimesContainer.innerHTML = html;
                 console.log('Prayer times displayed successfully');
             } catch (error) {
                 console.error('Error displaying all prayer times:', error);
-                document.getElementById('all-prayer-times').innerHTML = 'Error loading prayer times. Please try again.';
+                const prayerTimesContainer = document.getElementById('all-prayer-times');
+                if (prayerTimesContainer) {
+                    prayerTimesContainer.innerHTML = 'Error loading prayer times. Please try again.';
+                }
             }
         }
 
@@ -946,147 +944,297 @@
         // Default exams data with original format
         const defaultExams = {
             "English (AQA)": [
-                { name: "Speaking", date: "April 11th" },
-                { name: "Reading & Listening", date: "May 19th" },
-                { name: "Writing", date: "May 28th" }
+                { name: "Paper 1", date: "14th May 2025" },
+                { name: "Paper 2", date: "10th June 2025" }
             ],
             "English (CIE)": [
-                { name: "Reading & Writing", date: "May 8th" },
-                { name: "Listening", date: "May 22nd" }
+                { name: "Paper 1", date: "30th April 2025" },
+                { name: "Paper 2", date: "8th May 2025" }
             ],
             "Maths": [
-                { name: "1H", date: "May 15th" },
-                { name: "2H", date: "June 4th" }
+                { name: "Paper 1 (Non-Calculator)", date: "20th May 2025" },
+                { name: "Paper 2 (Calculator)", date: "6th June 2025" },
+                { name: "Paper 3 (Calculator)", date: "13th June 2025" }
             ],
             "Chemistry": [
-                { name: "P4 Theory", date: "April 30th" },
-                { name: "P6 Practical", date: "May 15th" },
-                { name: "P2 Multi-Choice", date: "June 10th" }
+                { name: "Paper 1", date: "15th May 2025" },
+                { name: "Paper 2", date: "12th June 2025" }
             ],
             "Physics": [
-                { name: "P4 Theory", date: "May 9th" },
-                { name: "P6 Practical", date: "May 20th" },
-                { name: "P2 Multi-Choice", date: "June 4th" }
+                { name: "Paper 1", date: "22nd May 2025" },
+                { name: "Paper 2", date: "17th June 2025" }
             ],
             "Computer Science": [
-                { name: "P1 Theory", date: "May 12th" },
-                { name: "P2 Practical", date: "May 21st" }
+                { name: "Paper 1", date: "13th May 2025" },
+                { name: "Paper 2", date: "23rd May 2025" }
             ]
         };
 
-        // Load exams from localStorage or use defaults
-        function loadExams() {
-            try {
-                const savedExams = localStorage.getItem('examTimetable');
-                if (savedExams) {
-                    return JSON.parse(savedExams);
-                }
-            } catch (error) {
-                console.error('Error loading saved exams:', error);
-                // If there's an error parsing the JSON, clear the localStorage
-                localStorage.removeItem('examTimetable');
-            }
-            return defaultExams;
+        // Load exams from local storage or use default
+        let exams = JSON.parse(localStorage.getItem('examTimetable')) || defaultExams;
+        
+        // Make sure we have the default exams if the loaded data is empty
+        if (!exams || Object.keys(exams).length === 0) {
+            console.log('No exams data found, using default data');
+            exams = defaultExams;
+            saveExams(exams);
         }
+        
+        console.log('Loaded exams data:', exams);
 
-        // Save exams to localStorage
+        // Save exams to local storage
         function saveExams(examsData) {
             try {
                 localStorage.setItem('examTimetable', JSON.stringify(examsData));
-                console.log('Exams saved successfully');
+                console.log('Exams saved to local storage');
             } catch (error) {
                 console.error('Error saving exams:', error);
             }
         }
 
-        let exams = loadExams();
-
-        // Function to render all subject tables
-        function renderSubjects() {
-            const container = document.getElementById('subjects-container');
-            container.innerHTML = '';
-
-            Object.entries(exams).forEach(([subject, examList]) => {
-                const tableContainer = document.createElement('div');
-                tableContainer.className = 'table-container';
-
+        // Update the renderExamsInOrder function to match existing table styles
+        function renderExamsInOrder() {
+            try {
+                console.log('Rendering exams in order...');
+                console.log('Current exams data:', exams);
+                
+                // If exams is undefined or empty, use the default exams
+                if (!exams || Object.keys(exams).length === 0) {
+                    console.log('Using default exams data for rendering');
+                    exams = defaultExams;
+                    saveExams(exams);
+                }
+                
+                const examsArray = [];
+                
+                Object.entries(exams).forEach(([subject, examList]) => {
+                    console.log(`Processing subject: ${subject} with ${examList.length} exams`);
+                    examList.forEach(exam => {
+                        try {
+                            if (exam.date) {
+                                // Parse the date string (e.g., "14th May 2025")
+                                const dateStr = exam.date;
+                                const regex = /(\d+)(st|nd|rd|th)\s+([A-Za-z]+)\s+(\d+)/;
+                                const match = dateStr.match(regex);
+                                
+                                if (match) {
+                                    const day = parseInt(match[1], 10);
+                                    const monthName = match[3];
+                                    const year = parseInt(match[4], 10);
+                                    const monthIndex = new Date(`${monthName} 1, 2000`).getMonth();
+                                    const dateObj = new Date(year, monthIndex, day);
+                                    
+                                    if (!isNaN(dateObj.getTime())) {
+                                        examsArray.push({
+                                            subject: subject,
+                                            name: exam.name,
+                                            date: exam.date,
+                                            dateObj: dateObj
+                                        });
+                                    } else {
+                                        console.error(`Invalid date object for exam ${exam.name} in ${subject}: ${dateStr}`);
+                                    }
+                                } else {
+                                    console.error(`Could not parse date string for exam ${exam.name} in ${subject}: ${dateStr}`);
+                                }
+                            } else {
+                                console.error(`No date found for exam ${exam.name} in ${subject}`);
+                            }
+                        } catch (error) {
+                            console.error(`Error processing exam ${exam.name} in ${subject}:`, error);
+                        }
+                    });
+                });
+                
+                if (examsArray.length === 0) {
+                    console.error('No valid exams to display');
+                    document.getElementById('exam-view').innerHTML += '<p>No valid exams found. Please check your exam data.</p>';
+                    return;
+                }
+                
+                console.log(`Found ${examsArray.length} valid exams to display`);
+                
+                console.log('Sorting exams by date...');
+                examsArray.sort((a, b) => a.dateObj - b.dateObj);
+                
+                const examView = document.getElementById('exam-view');
+                if (!examView) {
+                    console.error('Exam view container not found');
+                    return;
+                }
+                
+                // Remove any existing chronological table
+                const existingTable = examView.querySelector('.chronological-table');
+                if (existingTable) {
+                    existingTable.remove();
+                }
+                
                 const table = document.createElement('table');
-                table.className = 'subject-table';
-
-                // Create table caption (subject name)
-                const caption = document.createElement('caption');
-                const subjectSpan = document.createElement('span');
-                subjectSpan.textContent = subject;
-                subjectSpan.dataset.originalSubject = subject;
-
-                caption.appendChild(subjectSpan);
-                table.appendChild(caption);
-
-                // Create table headers
+                table.className = 'subject-table chronological-table';
+                
                 const thead = document.createElement('thead');
                 const headerRow = document.createElement('tr');
-
+                
+                const subjectHeader = document.createElement('th');
+                subjectHeader.textContent = 'Subject';
+                
                 const nameHeader = document.createElement('th');
                 nameHeader.textContent = 'Exam';
-
+                
                 const dateHeader = document.createElement('th');
                 dateHeader.textContent = 'Date';
-
-                const daysLeftHeader = document.createElement('th');
-                daysLeftHeader.textContent = 'Days Left';
-
+                
+                headerRow.appendChild(subjectHeader);
                 headerRow.appendChild(nameHeader);
                 headerRow.appendChild(dateHeader);
-                headerRow.appendChild(daysLeftHeader);
                 thead.appendChild(headerRow);
                 table.appendChild(thead);
-
-                // Create table body
+                
                 const tbody = document.createElement('tbody');
-
-                examList.forEach((exam, index) => {
+                
+                examsArray.forEach((exam, index) => {
                     const row = document.createElement('tr');
-                    row.dataset.index = index;
-                    row.dataset.subject = subject;
-                    row.dataset.examDate = exam.date;
-
+                    
+                    const subjectCell = document.createElement('td');
+                    subjectCell.textContent = exam.subject;
+                    
                     const nameCell = document.createElement('td');
-                    nameCell.className = 'exam-name';
                     nameCell.textContent = exam.name;
-
+                    
                     const dateCell = document.createElement('td');
-                    dateCell.className = 'exam-date';
                     dateCell.textContent = exam.date;
-
-                    const daysLeftCell = document.createElement('td');
-                    daysLeftCell.className = 'days-left';
-                    daysLeftCell.dataset.examDate = exam.date;
-
-                    // Calculate days left
-                    const daysLeft = calculateDaysLeft(exam.date);
-
-                    // Skip rendering if daysLeft is 999 (invalid date)
-                    if (daysLeft === 999) {
-                        return;
-                    }
-
-                    const daysLeftSpan = document.createElement('span');
-                    daysLeftSpan.className = 'days-left-value';
-                    updateDaysLeftDisplay(daysLeftSpan, daysLeft);
-
-                    daysLeftCell.appendChild(daysLeftSpan);
-
+                    
+                    row.appendChild(subjectCell);
                     row.appendChild(nameCell);
                     row.appendChild(dateCell);
-                    row.appendChild(daysLeftCell);
                     tbody.appendChild(row);
                 });
-
+                
                 table.appendChild(tbody);
-                tableContainer.appendChild(table);
+                
+                // Add a heading before the table
+                const heading = document.createElement('h2');
+                heading.textContent = 'Exams in Chronological Order';
+                heading.className = 'section-title';
+                
+                examView.appendChild(heading);
+                examView.appendChild(table);
+                console.log('Exams rendered successfully');
+            } catch (error) {
+                console.error('Error rendering exams in order:', error);
+            }
+        }
 
-                container.appendChild(tableContainer);
-            });
+        // Function to render subjects
+        function renderSubjects() {
+            try {
+                console.log('Rendering subjects...');
+                console.log('Current exams data:', exams);
+                
+                // If exams is undefined or empty, use the default exams
+                if (!exams || Object.keys(exams).length === 0) {
+                    console.log('Using default exams data for rendering subjects');
+                    exams = defaultExams;
+                    saveExams(exams);
+                }
+                
+                const container = document.getElementById('subjects-container');
+                if (!container) {
+                    console.error('Subjects container not found');
+                    return;
+                }
+                
+                container.innerHTML = '';
+                
+                Object.entries(exams).forEach(([subject, examList]) => {
+                    console.log(`Building table for subject: ${subject} with ${examList.length} exams`);
+                    const tableContainer = document.createElement('div');
+                    tableContainer.className = 'table-container';
+                    
+                    const table = document.createElement('table');
+                    table.className = 'subject-table';
+                    
+                    // Create table caption (subject name)
+                    const caption = document.createElement('caption');
+                    const subjectSpan = document.createElement('span');
+                    subjectSpan.textContent = subject;
+                    subjectSpan.contentEditable = "true";
+                    subjectSpan.dataset.originalSubject = subject;
+                    
+                    caption.appendChild(subjectSpan);
+                    table.appendChild(caption);
+                    
+                    // Create table headers
+                    const thead = document.createElement('thead');
+                    const headerRow = document.createElement('tr');
+                    
+                    const nameHeader = document.createElement('th');
+                    nameHeader.textContent = 'Exam';
+                    
+                    const dateHeader = document.createElement('th');
+                    dateHeader.textContent = 'Date';
+                    
+                    const daysLeftHeader = document.createElement('th');
+                    daysLeftHeader.textContent = 'Days Left';
+                    
+                    headerRow.appendChild(nameHeader);
+                    headerRow.appendChild(dateHeader);
+                    headerRow.appendChild(daysLeftHeader);
+                    thead.appendChild(headerRow);
+                    table.appendChild(thead);
+                    
+                    // Create table body
+                    const tbody = document.createElement('tbody');
+                    
+                    examList.forEach((exam, index) => {
+                        console.log(`Adding exam: ${exam.name}, Date: ${exam.date}`);
+                        const row = document.createElement('tr');
+                        row.dataset.index = index;
+                        row.dataset.subject = subject;
+                        row.dataset.examDate = exam.date;
+                        
+                        const nameCell = document.createElement('td');
+                        nameCell.className = 'exam-name';
+                        nameCell.textContent = exam.name;
+                        
+                        const dateCell = document.createElement('td');
+                        dateCell.className = 'exam-date';
+                        dateCell.textContent = exam.date;
+                        
+                        const daysLeftCell = document.createElement('td');
+                        daysLeftCell.className = 'days-left';
+                        daysLeftCell.dataset.examDate = exam.date;
+                        
+                        // Calculate days left
+                        const daysLeft = calculateDaysLeft(exam.date);
+                        
+                        // Skip rendering if daysLeft is 999 (invalid date)
+                        if (daysLeft === 999) {
+                            console.warn(`Skipping invalid date for ${exam.name}: ${exam.date}`);
+                            return;
+                        }
+                        
+                        const daysLeftSpan = document.createElement('span');
+                        daysLeftSpan.className = 'days-left-value';
+                        updateDaysLeftDisplay(daysLeftSpan, daysLeft);
+                        
+                        daysLeftCell.appendChild(daysLeftSpan);
+                        
+                        row.appendChild(nameCell);
+                        row.appendChild(dateCell);
+                        row.appendChild(daysLeftCell);
+                        tbody.appendChild(row);
+                    });
+                    
+                    table.appendChild(tbody);
+                    tableContainer.appendChild(table);
+                    container.appendChild(tableContainer);
+                });
+                
+                console.log('Subjects rendered successfully');
+            } catch (error) {
+                console.error('Error rendering subjects:', error);
+            }
         }
 
         // Function to update days left display
@@ -1154,6 +1302,12 @@
                             let year = match[3] ? parseInt(match[3], 10) : new Date().getFullYear();
                             const monthIndex = new Date(`${monthName} 1, 2000`).getMonth();
                             examDate = new Date(year, monthIndex, day);
+                        } else if (format.toString().includes('([A-Za-z]+)\s+(\d+)(?:st|nd|rd|th),?\s*(\d{4})?')) {
+                            const monthName = match[1];
+                            const day = parseInt(match[2], 10);
+                            let year = match[3] ? parseInt(match[3], 10) : new Date().getFullYear();
+                            const monthIndex = new Date(`${monthName} 1, 2000`).getMonth();
+                            examDate = new Date(year, monthIndex, day);
                         } else if (format.toString().includes('([A-Za-z]+)\s+(\d+),?\s*(\d{4})?')) {
                             const monthName = match[1];
                             const day = parseInt(match[2], 10);
@@ -1214,8 +1368,8 @@
         (async function initializePrayerTimes() {
             try {
                 console.log('Initializing prayer times...');
-                await updateCountdown();
                 await displayAllPrayerTimes();
+                await updateCountdown();
                 console.log('Prayer times initialized successfully');
             } catch (error) {
                 console.error('Error initializing prayer times:', error);
@@ -1359,8 +1513,8 @@
             (async function initializePrayerTimes() {
                 try {
                     console.log('Initializing prayer times...');
-                    await updateCountdown();
                     await displayAllPrayerTimes();
+                    await updateCountdown();
                     console.log('Prayer times initialized successfully');
                 } catch (error) {
                     console.error('Error initializing prayer times:', error);
@@ -1392,4 +1546,123 @@
             initializeApp();
         }
     </script>
+    
+    <!-- Add debugging script to ensure everything runs -->
+    <script>
+        // Immediate execution to check if the DOM is loaded
+        (function() {
+            console.log('Debug script running', new Date().toISOString());
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializeEverything);
+            } else {
+                // DOM already loaded
+                initializeEverything();
+            }
+            
+            function initializeEverything() {
+                console.log('DOM fully loaded - initializing EVERYTHING', new Date().toISOString());
+                
+                // First, make sure navigation buttons work
+                const prayerBtn = document.getElementById('prayer-btn');
+                const examBtn = document.getElementById('exam-btn');
+                
+                if (prayerBtn) {
+                    prayerBtn.addEventListener('click', function() {
+                        console.log('Prayer button clicked');
+                        document.getElementById('prayer-btn').classList.add('active');
+                        document.getElementById('exam-btn').classList.remove('active');
+                        
+                        const prayerView = document.getElementById('prayer-view');
+                        const examView = document.getElementById('exam-view');
+                        
+                        examView.style.opacity = '0';
+                        setTimeout(() => {
+                            examView.classList.remove('active');
+                            prayerView.classList.add('active');
+                            setTimeout(() => {
+                                prayerView.style.opacity = '1';
+                                document.getElementById('footer-text').textContent = 'Prayer times provided by AlAdhan API &copy; 2025';
+                            }, 50);
+                        }, 300);
+                    });
+                }
+                
+                if (examBtn) {
+                    examBtn.addEventListener('click', function() {
+                        console.log('Exam button clicked');
+                        document.getElementById('prayer-btn').classList.remove('active');
+                        document.getElementById('exam-btn').classList.add('active');
+                        
+                        const prayerView = document.getElementById('prayer-view');
+                        const examView = document.getElementById('exam-view');
+                        
+                        prayerView.style.opacity = '0';
+                        setTimeout(() => {
+                            prayerView.classList.remove('active');
+                            examView.classList.add('active');
+                            setTimeout(() => {
+                                examView.style.opacity = '1';
+                                document.getElementById('footer-text').textContent = 'Exam Timetable &copy; 2025';
+                            }, 50);
+                        }, 300);
+                    });
+                }
+                
+                // Initialize prayer times
+                console.log('Starting prayer times initialization');
+                document.getElementById('countdown').textContent = 'Loading...';
+                
+                // Use setTimeout to ensure DOM has fully painted
+                setTimeout(async function() {
+                    try {
+                        console.log('Prayer times initialization after timeout');
+                        await displayAllPrayerTimes();
+                        await updateCountdown();
+                        console.log('Prayer times initialized successfully');
+                    } catch (error) {
+                        console.error('Error initializing prayer times:', error);
+                        document.getElementById('countdown').textContent = 'Error loading prayer times';
+                        document.getElementById('all-prayer-times').innerHTML = 'Error loading prayer times. Please try again.';
+                    }
+                }, 100);
+                
+                // Initialize exam timetable with delay to ensure DOM is ready
+                console.log('Starting exam timetable initialization');
+                
+                // Clear any existing exam content to avoid duplication
+                const examView = document.getElementById('exam-view');
+                if (examView) {
+                    // Keep the heading but remove tables
+                    const tables = examView.querySelectorAll('table');
+                    tables.forEach(table => table.remove());
+                }
+                
+                // Use setTimeout to ensure DOM has fully painted
+                setTimeout(function() {
+                    try {
+                        console.log('Exam timetable initialization after timeout');
+                        // Make sure we're using the default exam data if nothing is loaded
+                        if (!exams || Object.keys(exams).length === 0) {
+                            console.log('Ensuring default exams are loaded');
+                            exams = defaultExams;
+                            saveExams(exams);
+                        }
+                        
+                        console.log('Rendering subjects with exam data:', exams);
+                        renderSubjects();
+                        updateAllDaysLeft();
+                        renderExamsInOrder();
+                        console.log('Exam timetable initialized successfully');
+                    } catch (error) {
+                        console.error('Error initializing exam timetable:', error);
+                        // Show error in exam view
+                        if (examView) {
+                            examView.innerHTML += '<p class="error-message">Error loading exam timetable. Please try refreshing the page.</p>';
+                        }
+                    }
+                }, 200);
+            }
+        })();
+    </script>
 </body>
+</html>
