@@ -620,44 +620,47 @@
         });
 
         // =============== NAVIGATION CONTROLS ===============
-        document.getElementById('prayer-btn').addEventListener('click', function() {
-            // Update active button
-            document.getElementById('prayer-btn').classList.add('active');
-            document.getElementById('exam-btn').classList.remove('active');
-            
-            // Show prayer view and hide exam view with smooth transition
-            const prayerView = document.getElementById('prayer-view');
-            const examView = document.getElementById('exam-view');
-            
-            examView.style.opacity = '0';
-            setTimeout(() => {
-                examView.classList.remove('active');
-                prayerView.classList.add('active');
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up navigation controls
+            document.getElementById('prayer-btn').addEventListener('click', function() {
+                // Update active button
+                document.getElementById('prayer-btn').classList.add('active');
+                document.getElementById('exam-btn').classList.remove('active');
+                
+                // Show prayer view and hide exam view with smooth transition
+                const prayerView = document.getElementById('prayer-view');
+                const examView = document.getElementById('exam-view');
+                
+                examView.style.opacity = '0';
                 setTimeout(() => {
-                    prayerView.style.opacity = '1';
-                    document.getElementById('footer-text').textContent = 'Prayer times provided by AlAdhan API &copy; 2025';
-                }, 50);
-            }, 300);
-        });
-        
-        document.getElementById('exam-btn').addEventListener('click', function() {
-            // Update active button
-            document.getElementById('prayer-btn').classList.remove('active');
-            document.getElementById('exam-btn').classList.add('active');
+                    examView.classList.remove('active');
+                    prayerView.classList.add('active');
+                    setTimeout(() => {
+                        prayerView.style.opacity = '1';
+                        document.getElementById('footer-text').textContent = 'Prayer times provided by AlAdhan API &copy; 2025';
+                    }, 50);
+                }, 300);
+            });
             
-            // Show exam view and hide prayer view with smooth transition
-            const prayerView = document.getElementById('prayer-view');
-            const examView = document.getElementById('exam-view');
-            
-            prayerView.style.opacity = '0';
-            setTimeout(() => {
-                prayerView.classList.remove('active');
-                examView.classList.add('active');
+            document.getElementById('exam-btn').addEventListener('click', function() {
+                // Update active button
+                document.getElementById('prayer-btn').classList.remove('active');
+                document.getElementById('exam-btn').classList.add('active');
+                
+                // Show exam view and hide prayer view with smooth transition
+                const prayerView = document.getElementById('prayer-view');
+                const examView = document.getElementById('exam-view');
+                
+                prayerView.style.opacity = '0';
                 setTimeout(() => {
-                    examView.style.opacity = '1';
-                    document.getElementById('footer-text').textContent = 'Exam Timetable &copy; 2025';
-                }, 50);
-            }, 300);
+                    prayerView.classList.remove('active');
+                    examView.classList.add('active');
+                    setTimeout(() => {
+                        examView.style.opacity = '1';
+                        document.getElementById('footer-text').textContent = 'Exam Timetable &copy; 2025';
+                    }, 50);
+                }, 300);
+            });
         });
         
         // =============== PRAYER TIMES FUNCTIONALITY ===============
@@ -665,6 +668,9 @@
         // Function to get prayer times
         async function getPrayerTimes() {
             try {
+                // For testing - uncomment the next line to force fallback times instead of API
+                // throw new Error('Using fallback times');
+                
                 const today = new Date();
                 const year = today.getFullYear();
                 const month = (today.getMonth() + 1).toString().padStart(2, '0');
@@ -679,21 +685,27 @@
                 }
 
                 console.log('Fetching prayer times from API...');
-                // Use a more reliable API endpoint with CORS support
+                
+                // Use a proxy or direct URL with JSONP/CORS handling
                 const apiUrl = `https://api.aladhan.com/v1/timingsByCity/${dateStr}?city=Cairo&country=Egypt&method=5`;
                 console.log('API URL:', apiUrl);
                 
-                const response = await fetch(apiUrl);
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
                 if (!response.ok) {
-                    console.error(`API response not OK: ${response.status} ${response.statusText}`);
-                    throw new Error(`Network response was not ok: ${response.statusText}`);
+                    throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
                 }
                 
                 const data = await response.json();
-                console.log('Prayer times data received:', data);
+                console.log('Prayer times data received');
                 
                 if (!data || !data.data || !data.data.timings) {
-                    console.error('Invalid data format received from API');
                     throw new Error('Invalid data format received from API');
                 }
                 
@@ -703,10 +715,10 @@
                 return data.data.timings;
             } catch (error) {
                 console.error('Error fetching prayer times:', error);
-                document.getElementById('all-prayer-times').innerHTML = 'Error loading prayer times. Please check your connection and try again later.';
+                document.getElementById('all-prayer-times').innerHTML = 'Using fallback prayer times (API unavailable)';
                 
                 // Return fallback prayer times for testing if API fails
-                return {
+                const fallbackTimes = {
                     Fajr: '05:30',
                     Sunrise: '06:45', 
                     Dhuhr: '12:15',
@@ -714,12 +726,23 @@
                     Maghrib: '18:00',
                     Isha: '19:30'
                 };
+                
+                // Store fallback times in cache to avoid repeated failed API calls
+                const today = new Date();
+                const dateStr = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+                localStorage.setItem(`prayerTimes_${dateStr}`, JSON.stringify(fallbackTimes));
+                
+                return fallbackTimes;
             }
         }
 
         // Format time remaining
         function formatTimeRemaining(ms) {
             try {
+                if (ms < 0) {
+                    console.warn('Negative time value:', ms);
+                    ms = 0; // Ensure we don't have negative time
+                }
                 const totalSeconds = Math.floor(ms / 1000);
                 const hours = Math.floor(totalSeconds / 3600);
                 const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -793,11 +816,22 @@
                     return;
                 }
                 
+                // Make sure the DOM elements exist
+                const countdownElement = document.getElementById('countdown');
+                const countdownTitleElement = document.getElementById('countdown-title');
+                const fajrTimeElement = document.getElementById('fajr-time');
+                const maghribTimeElement = document.getElementById('maghrib-time');
+                
+                if (!countdownElement || !countdownTitleElement || !fajrTimeElement || !maghribTimeElement) {
+                    console.error('Required DOM elements not found');
+                    return;
+                }
+                
                 const fajrTime = parseTime(times.Fajr);
                 const maghribTime = parseTime(times.Maghrib);
                 
-                document.getElementById('fajr-time').textContent = formatTo12Hour(times.Fajr);
-                document.getElementById('maghrib-time').textContent = formatTo12Hour(times.Maghrib);
+                fajrTimeElement.textContent = formatTo12Hour(times.Fajr);
+                maghribTimeElement.textContent = formatTo12Hour(times.Maghrib);
 
                 // Clear any existing interval to prevent multiple intervals running
                 if (window.countdownInterval) {
@@ -806,34 +840,38 @@
                 
                 // Function to update the countdown timer
                 const updateTimer = () => {
-                    const now = new Date();
-                    let nextFajrTime = new Date(fajrTime);
-                    let prevMaghribTime = new Date(maghribTime);
-                    prevMaghribTime.setDate(prevMaghribTime.getDate() - 1);
-                    
-                    // Determine which prayer to count down to based on current time
-                    if (now > fajrTime && now < maghribTime) {
-                        // Between Fajr and Maghrib - count down to Maghrib
-                        const timeRemaining = maghribTime - now;
-                        document.getElementById('countdown-title').textContent = "Time Until Maghrib";
-                        document.getElementById('countdown').textContent = formatTimeRemaining(timeRemaining);
-                        updateProgress(fajrTime, maghribTime, now);
-                    } else {
-                        // After Maghrib or before Fajr - count down to Fajr
-                        if (now > maghribTime) {
-                            nextFajrTime.setDate(nextFajrTime.getDate() + 1);
-                        }
-                        const timeRemaining = nextFajrTime - now;
-                        document.getElementById('countdown-title').textContent = "Time Until Fajr";
-                        document.getElementById('countdown').textContent = formatTimeRemaining(timeRemaining);
+                    try {
+                        const now = new Date();
+                        let nextFajrTime = new Date(fajrTime);
+                        let prevMaghribTime = new Date(maghribTime);
+                        prevMaghribTime.setDate(prevMaghribTime.getDate() - 1);
                         
-                        // For progress bar, if after Maghrib, we're progressing from Maghrib to next Fajr
-                        if (now > maghribTime) {
-                            updateProgress(maghribTime, nextFajrTime, now);
+                        // Determine which prayer to count down to based on current time
+                        if (now > fajrTime && now < maghribTime) {
+                            // Between Fajr and Maghrib - count down to Maghrib
+                            const timeRemaining = maghribTime - now;
+                            countdownTitleElement.textContent = "Time Until Maghrib";
+                            countdownElement.textContent = formatTimeRemaining(timeRemaining);
+                            updateProgress(fajrTime, maghribTime, now);
                         } else {
-                            // Before Fajr, we're progressing from previous Maghrib to Fajr
-                            updateProgress(prevMaghribTime, fajrTime, now);
+                            // After Maghrib or before Fajr - count down to Fajr
+                            if (now > maghribTime) {
+                                nextFajrTime.setDate(nextFajrTime.getDate() + 1);
+                            }
+                            const timeRemaining = nextFajrTime - now;
+                            countdownTitleElement.textContent = "Time Until Fajr";
+                            countdownElement.textContent = formatTimeRemaining(timeRemaining);
+                            
+                            // For progress bar, if after Maghrib, we're progressing from Maghrib to next Fajr
+                            if (now > maghribTime) {
+                                updateProgress(maghribTime, nextFajrTime, now);
+                            } else {
+                                // Before Fajr, we're progressing from previous Maghrib to Fajr
+                                updateProgress(prevMaghribTime, fajrTime, now);
+                            }
                         }
+                    } catch (error) {
+                        console.error('Error in update timer:', error);
                     }
                 };
 
@@ -842,25 +880,6 @@
                 
                 // Set up the interval (less frequent updates for mobile compatibility)
                 window.countdownInterval = setInterval(updateTimer, 1000);
-                
-                // Only send notification once every 5 minutes, not every second
-                if (window.notificationInterval) {
-                    clearInterval(window.notificationInterval);
-                }
-                window.notificationInterval = setInterval(() => {
-                    const now = new Date();
-                    if (now > fajrTime && now < maghribTime) {
-                        const timeRemaining = maghribTime - now;
-                        sendCountdownNotification('Time Until Maghrib', `Maghrib in ${formatTimeRemaining(timeRemaining)}`);
-                    } else {
-                        let nextFajrTime = new Date(fajrTime);
-                        if (now > maghribTime) {
-                            nextFajrTime.setDate(nextFajrTime.getDate() + 1);
-                        }
-                        const timeRemaining = nextFajrTime - now;
-                        sendCountdownNotification('Time Until Fajr', `Fajr in ${formatTimeRemaining(timeRemaining)}`);
-                    }
-                }, 300000); // 5 minutes (300,000 ms)
             } catch (error) {
                 console.error('Error in updateCountdown:', error);
                 document.getElementById('countdown').textContent = 'Error updating countdown';
@@ -1345,5 +1364,52 @@
         
         // Call the function to render exams in order
         renderExamsInOrder();
+        
+        // Main initialization function
+        function initializeApp() {
+            console.log('Initializing application...');
+            
+            // Call showLoadingIndicator before fetching prayer times
+            showLoadingIndicator();
+            
+            // Initialize prayer times
+            (async function initializePrayerTimes() {
+                try {
+                    console.log('Initializing prayer times...');
+                    await updateCountdown();
+                    await displayAllPrayerTimes();
+                    console.log('Prayer times initialized successfully');
+                } catch (error) {
+                    console.error('Error initializing prayer times:', error);
+                    document.getElementById('countdown').textContent = 'Error loading prayer times';
+                    document.getElementById('all-prayer-times').innerHTML = 'Error loading prayer times. Please check your connection and try again.';
+                }
+            })();
+            
+            // Initialize exam timetable
+            console.log('Initializing exam timetable...');
+            try {
+                renderSubjects();
+                updateAllDaysLeft();
+                renderExamsInOrder();
+                console.log('Exam timetable initialized successfully');
+            } catch (error) {
+                console.error('Error initializing exam timetable:', error);
+            }
+            
+            console.log('App initialization complete');
+        }
+
+        // Wait for DOM to be fully loaded before initializing
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('DOM fully loaded - initializing app');
+                initializeApp();
+            });
+        } else {
+            // DOM already loaded
+            console.log('DOM already loaded - initializing app immediately');
+            initializeApp();
+        }
     </script>
 </body>
