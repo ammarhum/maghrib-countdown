@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Prayer Times & Exam Timetable</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Prayer Times Countdown</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -674,15 +675,18 @@
         // Function to get prayer times
         async function getPrayerTimes() {
             try {
-                // GUARANTEED FALLBACK - comment out the return statement below if you want to use the API
-                // return {
-                //     Fajr: '05:30',
-                //     Sunrise: '06:45', 
-                //     Dhuhr: '12:15',
-                //     Asr: '15:30',
-                //     Maghrib: '18:00',
-                //     Isha: '19:30'
-                // };
+                // GUARANTEED FALLBACK - Uncomment if API is not working
+                if (localStorage.getItem('useFallback') === 'true') {
+                    console.log('Using fallback prayer times data');
+                    return {
+                        Fajr: '05:30',
+                        Sunrise: '06:45', 
+                        Dhuhr: '12:15',
+                        Asr: '15:30',
+                        Maghrib: '18:00',
+                        Isha: '19:30'
+                    };
+                }
 
                 const today = new Date();
                 const year = today.getFullYear();
@@ -697,22 +701,31 @@
                     return JSON.parse(cachedTimes);
                 }
 
-                console.log('Fetching prayer times from API...');
+                console.log('Fetching prayer times from API...', dateStr);
                 
                 // Using a different API endpoint that should be more reliable
                 const apiUrl = `https://api.aladhan.com/v1/calendarByCity?city=Cairo&country=Egypt&method=5&month=${month}&year=${year}`;
                 console.log('API URL:', apiUrl);
                 
-                const response = await fetch(apiUrl);
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
                 
                 if (!response.ok) {
+                    console.error(`API response error: ${response.status} ${response.statusText}`);
                     throw new Error(`Network response was not ok: ${response.status}`);
                 }
                 
                 const data = await response.json();
-                console.log('Prayer times data received');
+                console.log('Prayer times data received:', data ? 'valid data' : 'invalid data');
                 
                 if (!data || !data.data || !data.data[day - 1] || !data.data[day - 1].timings) {
+                    console.error('Invalid data format received:', data);
                     throw new Error('Invalid data format received from API');
                 }
                 
@@ -731,8 +744,27 @@
             } catch (error) {
                 console.error('Error fetching prayer times:', error);
                 
-                // GUARANTEED FALLBACK
-                const fallbackTimes = {
+                // If API fails, try to use yesterday's cached data if available
+                try {
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    const prevYear = yesterday.getFullYear();
+                    const prevMonth = (yesterday.getMonth() + 1).toString().padStart(2, '0');
+                    const prevDay = yesterday.getDate().toString().padStart(2, '0');
+                    const prevDateStr = `${prevYear}-${prevMonth}-${prevDay}`;
+                    
+                    const cachedTimes = localStorage.getItem(`prayerTimes_${prevDateStr}`);
+                    if (cachedTimes) {
+                        console.log('Using previous day\'s cached prayer times as fallback');
+                        return JSON.parse(cachedTimes);
+                    }
+                } catch (fallbackError) {
+                    console.error('Error using cached fallback:', fallbackError);
+                }
+                
+                // Ultimate fallback
+                console.log('Using hardcoded fallback prayer times');
+                return {
                     Fajr: '05:30',
                     Sunrise: '06:45', 
                     Dhuhr: '12:15',
@@ -740,13 +772,6 @@
                     Maghrib: '18:00',
                     Isha: '19:30'
                 };
-                
-                // Store fallback times in cache to avoid repeated failed API calls
-                const today = new Date();
-                const dateStr = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
-                localStorage.setItem(`prayerTimes_${dateStr}`, JSON.stringify(fallbackTimes));
-                
-                return fallbackTimes;
             }
         }
 
@@ -1434,6 +1459,57 @@
         (function() {
             console.log('Debug script running', new Date().toISOString());
             
+            // Set up a global error handler to log errors
+            window.onerror = function(message, source, lineno, colno, error) {
+                console.error('Global error caught:', message, 'at', source, lineno, colno, error);
+                
+                // Add visible error message for debugging on mobile
+                const errorContainer = document.createElement('div');
+                errorContainer.style.position = 'fixed';
+                errorContainer.style.bottom = '10px';
+                errorContainer.style.left = '10px';
+                errorContainer.style.right = '10px';
+                errorContainer.style.backgroundColor = 'rgba(255,0,0,0.8)';
+                errorContainer.style.color = 'white';
+                errorContainer.style.padding = '10px';
+                errorContainer.style.borderRadius = '5px';
+                errorContainer.style.zIndex = '9999';
+                errorContainer.style.fontSize = '12px';
+                errorContainer.textContent = `Error: ${message} (${source}:${lineno})`;
+                
+                document.body.appendChild(errorContainer);
+                
+                // Auto-remove after 10 seconds
+                setTimeout(() => errorContainer.remove(), 10000);
+                
+                return false; // Let the error propagate
+            };
+            
+            // Add a toggle button for fallback mode
+            const fallbackBtn = document.createElement('button');
+            fallbackBtn.id = 'fallback-toggle';
+            fallbackBtn.textContent = localStorage.getItem('useFallback') === 'true' ? 'Use API' : 'Use Fallback';
+            fallbackBtn.style.position = 'fixed';
+            fallbackBtn.style.top = '10px';
+            fallbackBtn.style.right = '10px';
+            fallbackBtn.style.zIndex = '1000';
+            fallbackBtn.style.padding = '5px 10px';
+            fallbackBtn.style.borderRadius = '5px';
+            fallbackBtn.style.backgroundColor = '#333';
+            fallbackBtn.style.color = 'white';
+            fallbackBtn.style.border = 'none';
+            
+            fallbackBtn.addEventListener('click', function() {
+                const useFallback = localStorage.getItem('useFallback') === 'true';
+                localStorage.setItem('useFallback', !useFallback ? 'true' : 'false');
+                fallbackBtn.textContent = !useFallback ? 'Use API' : 'Use Fallback';
+                location.reload();
+            });
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                document.body.appendChild(fallbackBtn);
+            });
+            
             // Make sure the default exams are set
             console.log('Checking exams data before initialization');
             if (!exams || Object.keys(exams).length === 0) {
@@ -1500,13 +1576,6 @@
                                 
                                 // Force re-render exams when the exam tab is clicked
                                 console.log('Re-rendering exams on tab click');
-                                // Remove all existing exam tables to avoid duplication
-                                const existingTables = document.querySelectorAll('.chronological-table');
-                                existingTables.forEach(table => table.remove());
-                                const existingTitles = document.querySelectorAll('.section-title');
-                                existingTitles.forEach(title => title.remove());
-                                
-                                // Only render once
                                 renderSubjects();
                                 updateAllDaysLeft();
                                 renderExamsInOrder();
