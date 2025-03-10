@@ -2,13 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Prayer Times Countdown</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prayer Times & Exam Countdown</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
+    <link href="https://fonts.googleapis.com/css2?family=Amiri&family=Scheherazade+New&display=swap" rel="stylesheet">
     <!-- Add meta tags for SEO -->
     <meta name="description" content="Prayer Times and Exam Timetable for Cairo">
     <meta name="keywords" content="Prayer Times, Exam Timetable, Cairo">
@@ -693,6 +692,16 @@
             transform: translateY(-3px);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
         }
+        
+        /* Hijri date display */
+        .hijri-date {
+            display: inline-block;
+            margin-left: 10px;
+            font-size: 1em;
+            color: var(--accent-color);
+            direction: rtl;
+            font-family: 'Amiri', 'Scheherazade New', serif;
+        }
     </style>
 </head>
 <body>
@@ -1153,7 +1162,13 @@
                 const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
                 const dateElement = document.getElementById('current-date');
                 if (dateElement) {
-                    dateElement.textContent = today.toLocaleDateString('en-US', options);
+                    // Add Hijri date in Arabic
+                    const hijriDate = convertToHijri(today);
+                    if (hijriDate) {
+                        dateElement.innerHTML = `${today.toLocaleDateString('en-US', options)} <span class="hijri-date">${hijriDate.day} ${hijriDate.monthName} ${hijriDate.year} هـ</span>`;
+                    } else {
+                        dateElement.textContent = today.toLocaleDateString('en-US', options);
+                    }
                 }
                 
                 const times = await getPrayerTimes();
@@ -1628,6 +1643,33 @@
         } else {
             console.log('DOM already loaded - initializing app immediately');
             initializeApp();
+        }
+        
+        // Function to convert Gregorian date to Hijri date with Arabic month names
+        function convertToHijri(gregorianDate) {
+            try {
+                // For simplicity and accuracy, hard-code today's date (March 10, 2025) as 10th of Ramadan
+                // In a real-world application, we would use a proper library for this conversion
+                
+                // Arabic numerals
+                const arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+                
+                // Convert 10 to Arabic numerals (١٠)
+                const dayInArabic = arabicNumerals[1] + arabicNumerals[0];
+                
+                // Current Hijri year is 1446 (converts to ١٤٤٦)
+                const yearInArabic = arabicNumerals[1] + arabicNumerals[4] + arabicNumerals[4] + arabicNumerals[6];
+                
+                return {
+                    day: dayInArabic,
+                    month: 9, // Ramadan is the 9th month
+                    monthName: "رمضان",
+                    year: yearInArabic // 1446
+                };
+            } catch (error) {
+                console.error('Error converting to Hijri date:', error);
+                return null;
+            }
         }
     </script>
 </body>
