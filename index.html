@@ -518,6 +518,181 @@
                 right: 15px;
             }
         }
+
+        /* Enhanced Animations and Visual Effects */
+        @keyframes gentle-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes slide-gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        @keyframes subtle-fade-in {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Improved prayer time display */
+        .countdown-container {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .countdown-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+        }
+        
+        .time {
+            transition: color 0.3s ease;
+        }
+        
+        .countdown-container:hover .time {
+            color: var(--accent-color);
+        }
+        
+        /* Enhanced progress bar */
+        .progress-bar {
+            background: linear-gradient(90deg, 
+                var(--accent-color), 
+                var(--primary-color), 
+                var(--accent-color));
+            background-size: 200% 100%;
+            animation: slide-gradient 3s ease infinite;
+            transition: width 0.8s ease-in-out;
+        }
+        
+        /* Prayer times grid improvements */
+        .prayer-times-grid {
+            transition: all 0.3s ease;
+        }
+        
+        .prayer-time-item {
+            transition: all 0.3s ease;
+        }
+        
+        .prayer-time-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .prayer-time-item.current {
+            animation: gentle-pulse 2s infinite;
+        }
+        
+        /* Enhanced UI elements */
+        .nav-btn {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .nav-btn:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: #fff;
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.3s ease;
+        }
+        
+        .nav-btn:hover:after {
+            transform: scaleX(1);
+            transform-origin: left;
+        }
+        
+        .nav-btn.active:after {
+            transform: scaleX(1);
+        }
+        
+        /* Improved toggle and theme buttons */
+        .toggle-btn {
+            transition: transform 0.3s ease, background-color 0.3s ease;
+        }
+        
+        .toggle-btn:hover {
+            transform: rotate(15deg);
+        }
+        
+        .theme-dropdown {
+            transition: all 0.3s ease;
+        }
+        
+        .theme-dropdown:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--accent-color);
+        }
+        
+        /* Exam section improvements */
+        .exam-card {
+            transition: all 0.3s ease;
+        }
+        
+        .exam-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Entrance animations */
+        .view {
+            animation: subtle-fade-in 0.5s ease-out;
+        }
+        
+        /* Improved masjid SVG */
+        .masjid-svg {
+            transition: all 0.5s ease;
+            filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.1));
+        }
+        
+        .masjid-container:hover .masjid-svg {
+            transform: scale(1.02);
+            filter: drop-shadow(0 8px 15px rgba(0, 0, 0, 0.15));
+        }
+        
+        /* Enhanced text elements */
+        h1, h2, h3 {
+            position: relative;
+            display: inline-block;
+        }
+        
+        h1:after, h2:after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            width: 0;
+            height: 3px;
+            background-color: var(--accent-color);
+            transition: width 0.3s ease, left 0.3s ease;
+        }
+        
+        h1:hover:after, h2:hover:after {
+            width: 100%;
+            left: 0;
+        }
+        
+        /* Focus states */
+        button:focus, select:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+        }
+        
+        /* Improved container styling */
+        #prayer-times, .exam-container, .subjects-container {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        #prayer-times:hover, .exam-container:hover, .subjects-container:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body>
