@@ -674,6 +674,19 @@
         // Toggle dark mode
         document.getElementById('toggle-dark-mode').addEventListener('click', function() {
             document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+            document.getElementById('toggle-dark-mode').textContent = isDark ? '☀️' : '🌙';
+        });
+
+        // Check for saved dark mode preference
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('toggle-dark-mode').textContent = '☀️';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
         });
 
         // =============== NAVIGATION CONTROLS ===============
@@ -731,19 +744,6 @@
         // Function to get prayer times
         async function getPrayerTimes() {
             try {
-                // GUARANTEED FALLBACK - Uncomment if API is not working
-                if (localStorage.getItem('useFallback') === 'true') {
-                    console.log('Using fallback prayer times data');
-                    return {
-                        Fajr: '05:30',
-                        Sunrise: '06:45', 
-                        Dhuhr: '12:15',
-                        Asr: '15:30',
-                        Maghrib: '18:00',
-                        Isha: '19:30'
-                    };
-                }
-
                 const today = new Date();
                 const year = today.getFullYear();
                 const month = (today.getMonth() + 1).toString().padStart(2, '0');
@@ -1454,197 +1454,6 @@
             console.log('DOM already loaded - initializing app immediately');
             initializeApp();
         }
-    </script>
-    
-    <!-- Add debugging script to ensure everything runs -->
-    <script>
-        // Immediate execution to check if the DOM is loaded
-        (function() {
-            console.log('Debug script running', new Date().toISOString());
-            
-            // Set up a global error handler to log errors
-            window.onerror = function(message, source, lineno, colno, error) {
-                console.error('Global error caught:', message, 'at', source, lineno, colno, error);
-                
-                // Add visible error message for debugging on mobile
-                const errorContainer = document.createElement('div');
-                errorContainer.style.position = 'fixed';
-                errorContainer.style.bottom = '10px';
-                errorContainer.style.left = '10px';
-                errorContainer.style.right = '10px';
-                errorContainer.style.backgroundColor = 'rgba(255,0,0,0.8)';
-                errorContainer.style.color = 'white';
-                errorContainer.style.padding = '10px';
-                errorContainer.style.borderRadius = '5px';
-                errorContainer.style.zIndex = '9999';
-                errorContainer.style.fontSize = '12px';
-                errorContainer.textContent = `Error: ${message} (${source}:${lineno})`;
-                
-                document.body.appendChild(errorContainer);
-                
-                // Auto-remove after 10 seconds
-                setTimeout(() => errorContainer.remove(), 10000);
-                
-                return false; // Let the error propagate
-            };
-            
-            // Add a toggle button for fallback mode
-            const fallbackBtn = document.createElement('button');
-            fallbackBtn.id = 'fallback-toggle';
-            fallbackBtn.textContent = localStorage.getItem('useFallback') === 'true' ? 'Use API' : 'Use Fallback';
-            fallbackBtn.style.position = 'fixed';
-            fallbackBtn.style.top = '10px';
-            fallbackBtn.style.right = '10px';
-            fallbackBtn.style.zIndex = '1000';
-            fallbackBtn.style.padding = '5px 10px';
-            fallbackBtn.style.borderRadius = '5px';
-            fallbackBtn.style.backgroundColor = '#333';
-            fallbackBtn.style.color = 'white';
-            fallbackBtn.style.border = 'none';
-            
-            fallbackBtn.addEventListener('click', function() {
-                const useFallback = localStorage.getItem('useFallback') === 'true';
-                localStorage.setItem('useFallback', !useFallback ? 'true' : 'false');
-                fallbackBtn.textContent = !useFallback ? 'Use API' : 'Use Fallback';
-                location.reload();
-            });
-            
-            document.addEventListener('DOMContentLoaded', function() {
-                document.body.appendChild(fallbackBtn);
-            });
-            
-            // No need to check exams here as we already initialized them at the top of the page
-            
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initializeEverything);
-            } else {
-                // DOM already loaded
-                initializeEverything();
-            }
-            
-            function initializeEverything() {
-                console.log('DOM fully loaded - initializing EVERYTHING', new Date().toISOString());
-                
-                // First, make sure navigation buttons work
-                const prayerBtn = document.getElementById('prayer-btn');
-                const examBtn = document.getElementById('exam-btn');
-                
-                if (prayerBtn) {
-                    prayerBtn.addEventListener('click', function() {
-                        console.log('Prayer button clicked');
-                        document.getElementById('prayer-btn').classList.add('active');
-                        document.getElementById('exam-btn').classList.remove('active');
-                        
-                        const prayerView = document.getElementById('prayer-view');
-                        const examView = document.getElementById('exam-view');
-                        
-                        examView.style.opacity = '0';
-                        setTimeout(() => {
-                            examView.classList.remove('active');
-                            prayerView.classList.add('active');
-                            setTimeout(() => {
-                                prayerView.style.opacity = '1';
-                                document.getElementById('footer-text').textContent = 'Prayer times provided by AlAdhan API &copy; 2025';
-                            }, 50);
-                        }, 300);
-                    });
-                }
-                
-                if (examBtn) {
-                    examBtn.addEventListener('click', function() {
-                        console.log('Exam button clicked');
-                        document.getElementById('prayer-btn').classList.remove('active');
-                        document.getElementById('exam-btn').classList.add('active');
-                        
-                        const prayerView = document.getElementById('prayer-view');
-                        const examView = document.getElementById('exam-view');
-                        
-                        prayerView.style.opacity = '0';
-                        setTimeout(() => {
-                            prayerView.classList.remove('active');
-                            examView.classList.add('active');
-                            setTimeout(() => {
-                                examView.style.opacity = '1';
-                                document.getElementById('footer-text').textContent = 'Exam Timetable &copy; 2025';
-                                
-                                // Force re-render exams when the exam tab is clicked
-                                console.log('Re-rendering exams on tab click');
-                                renderSubjects();
-                                updateAllDaysLeft();
-                                renderExamsInOrder();
-                            }, 50);
-                        }, 300);
-                    });
-                }
-                
-                // Initialize prayer times
-                console.log('Starting prayer times initialization');
-                document.getElementById('countdown').textContent = 'Loading...';
-                
-                // Use setTimeout to ensure DOM has fully painted
-                setTimeout(async function() {
-                    try {
-                        console.log('Prayer times initialization after timeout');
-                        await displayAllPrayerTimes();
-                        await updateCountdown();
-                        console.log('Prayer times initialized successfully');
-                    } catch (error) {
-                        console.error('Error initializing prayer times:', error);
-                        document.getElementById('countdown').textContent = 'Error loading prayer times';
-                        document.getElementById('all-prayer-times').innerHTML = 'Error loading prayer times. Please try again.';
-                    }
-                }, 100);
-                
-                // Initialize exam timetable with delay to ensure DOM is ready
-                console.log('Starting exam timetable initialization');
-                
-                // Check if subjects-container exists
-                const subjectsContainer = document.getElementById('subjects-container');
-                if (!subjectsContainer) {
-                    console.error('CRITICAL ERROR: subjects-container element not found in the DOM!');
-                } else {
-                    console.log('subjects-container found in DOM');
-                }
-                
-                // Prevent multiple initializations
-                let initialized = false;
-                
-                // Direct initialization with minimal delay
-                console.log('Direct exam timetable initialization');
-                try {
-                    if (!initialized) {
-                        initialized = true;
-                        
-                        // Make sure we're using the default exam data if nothing is loaded
-                        if (!exams || Object.keys(exams).length === 0) {
-                            console.log('Ensuring default exams are loaded');
-                            exams = defaultExams;
-                            saveExams(exams);
-                        }
-                        
-                        // Clear any existing tables to prevent duplication
-                        const existingTables = document.querySelectorAll('.chronological-table');
-                        existingTables.forEach(table => table.remove());
-                        const existingTitles = document.querySelectorAll('.section-title');
-                        existingTitles.forEach(title => title.remove());
-                        
-                        console.log('Rendering subjects with exam data:', exams);
-                        renderSubjects();
-                        updateAllDaysLeft();
-                        renderExamsInOrder();
-                        console.log('Exam timetable initialized successfully');
-                    }
-                } catch (error) {
-                    console.error('Error initializing exam timetable:', error);
-                    // Show error in exam view
-                    if (examView) {
-                        examView.innerHTML += '<p class="error-message">Error loading exam timetable. Please try refreshing the page.</p>';
-                    }
-                }
-                
-                // No need for backup initialization since we have a flag to prevent multiple calls
-            }
-        })();
     </script>
 </body>
 </html>
