@@ -615,6 +615,62 @@
     </footer>
 
     <script>
+        // Initialize global variables first to prevent reference errors
+        let exams = {};
+        
+        // Default exams data with original format
+        const defaultExams = {
+            "English (AQA)": [
+                { name: "Speaking", date: "April 11th" },
+                { name: "Reading & Listening", date: "May 19th" },
+                { name: "Writing", date: "May 28th" }
+            ],
+            "English (CIE)": [
+                { name: "Reading & Writing", date: "May 8th" },
+                { name: "Listening", date: "May 22nd" }
+            ],
+            "Maths": [
+                { name: "1H", date: "May 15th" },
+                { name: "2H", date: "June 4th" }
+            ],
+            "Chemistry": [
+                { name: "P4 Theory", date: "April 30th" },
+                { name: "P6 Practical", date: "May 15th" },
+                { name: "P2 Multi-Choice", date: "June 10th" }
+            ],
+            "Physics": [
+                { name: "P4 Theory", date: "May 9th" },
+                { name: "P6 Practical", date: "May 20th" },
+                { name: "P2 Multi-Choice", date: "June 4th" }
+            ],
+            "Computer Science": [
+                { name: "P1 Theory", date: "May 12th" },
+                { name: "P2 Practical", date: "May 26th" }
+            ]
+        };
+        
+        // Load the saved exams or use default
+        try {
+            const savedExams = localStorage.getItem('exams');
+            if (savedExams) {
+                exams = JSON.parse(savedExams);
+            } else {
+                exams = defaultExams;
+            }
+        } catch (e) {
+            console.error('Error loading saved exams:', e);
+            exams = defaultExams;
+        }
+        
+        // Function to save exams to localStorage
+        function saveExams(examsData) {
+            try {
+                localStorage.setItem('exams', JSON.stringify(examsData));
+            } catch (e) {
+                console.error('Error saving exams:', e);
+            }
+        }
+
         // Toggle dark mode
         document.getElementById('toggle-dark-mode').addEventListener('click', function() {
             document.body.classList.toggle('dark-mode');
@@ -972,60 +1028,7 @@
 
         // =============== EXAM TIMETABLE FUNCTIONALITY ===============
 
-        // Default exams data with original format
-        const defaultExams = {
-            "English (AQA)": [
-                { name: "Speaking", date: "April 11th" },
-                { name: "Reading & Listening", date: "May 19th" },
-                { name: "Writing", date: "May 28th" }
-            ],
-            "English (CIE)": [
-                { name: "Reading & Writing", date: "May 8th" },
-                { name: "Listening", date: "May 22nd" }
-            ],
-            "Maths": [
-                { name: "1H", date: "May 15th" },
-                { name: "2H", date: "June 4th" }
-            ],
-            "Chemistry": [
-                { name: "P4 Theory", date: "April 30th" },
-                { name: "P6 Practical", date: "May 15th" },
-                { name: "P2 Multi-Choice", date: "June 10th" }
-            ],
-            "Physics": [
-                { name: "P4 Theory", date: "May 9th" },
-                { name: "P6 Practical", date: "May 20th" },
-                { name: "P2 Multi-Choice", date: "June 4th" }
-            ],
-            "Computer Science": [
-                { name: "P1 Theory", date: "May 12th" },
-                { name: "P2 Practical", date: "May 21st" }
-            ]
-        };
-
-        // Load exams from local storage or use default
-        let exams = JSON.parse(localStorage.getItem('examTimetable')) || defaultExams;
-        
-        // Make sure we have the default exams if the loaded data is empty
-        if (!exams || Object.keys(exams).length === 0) {
-            console.log('No exams data found, using default data');
-            exams = defaultExams;
-            saveExams(exams);
-        }
-        
-        console.log('Loaded exams data:', exams);
-
-        // Save exams to local storage
-        function saveExams(examsData) {
-            try {
-                localStorage.setItem('examTimetable', JSON.stringify(examsData));
-                console.log('Exams saved to local storage');
-            } catch (error) {
-                console.error('Error saving exams:', error);
-            }
-        }
-
-        // Update the renderExamsInOrder function to match existing table styles
+        // Function to render exams in chronological order
         function renderExamsInOrder() {
             try {
                 console.log('Rendering exams in chronological order...');
@@ -1510,17 +1513,7 @@
                 document.body.appendChild(fallbackBtn);
             });
             
-            // Make sure the default exams are set
-            console.log('Checking exams data before initialization');
-            if (!exams || Object.keys(exams).length === 0) {
-                console.log('Setting exams to defaults before DOM ready');
-                exams = defaultExams;
-                try {
-                    saveExams(exams);
-                } catch (e) {
-                    console.error('Failed to save default exams', e);
-                }
-            }
+            // No need to check exams here as we already initialized them at the top of the page
             
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', initializeEverything);
